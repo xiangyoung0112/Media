@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>空間向量數學實驗室</title>
+
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['\\(','\\)'], ['$','$']] }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<style>
+*{ box-sizing:border-box; margin:0; padding:0; }
+
+:root{
+  --blue-deep:#1e3a8a;
+  --blue-mid:#2563eb;
+  --blue-light:#3b82f6;
+  --blue-pale:#eff6ff;
+  --blue-tint:#dbeafe;
+  --slate:#475569;
+  --green:#16a34a;
+  --red:#dc2626;
+  --yellow:#ca8a04;
+  --white:#ffffff;
+  --bg:#f0f6ff;
+}
+
+body{
+  font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;
+  background:var(--bg);
+  color:#1f2937;
+  min-height:100vh;
+}
+
+/* ── Header ── */
+header{
+  background:linear-gradient(135deg,var(--blue-deep),var(--blue-mid));
+  color:white;
+  text-align:center;
+  padding:28px 20px 20px;
+  position:relative;
+}
+header h1{ font-size:28px; font-weight:900; letter-spacing:2px; }
+header p{ margin-top:8px; font-size:16px; opacity:.85; }
+
+/* ── Progress Track ── */
+.progress-track{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:0;
+  margin-top:18px;
+  flex-wrap:nowrap;
+}
+.prog-node{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  position:relative;
+}
+.prog-circle{
+  width:36px; height:36px;
+  border-radius:50%;
+  border:3px solid rgba(255,255,255,0.35);
+  background:rgba(255,255,255,0.12);
+  display:flex; align-items:center; justify-content:center;
+  font-weight:900; font-size:15px;
+  color:rgba(255,255,255,0.5);
+  transition:all .4s;
+}
+.prog-node.active .prog-circle{
+  border-color:white;
+  background:rgba(255,255,255,0.25);
+  color:white;
+}
+.prog-node.done .prog-circle{
+  border-color:#86efac;
+  background:#16a34a;
+  color:white;
+}
+.prog-label{
+  font-size:11px;
+  color:rgba(255,255,255,0.55);
+  white-space:nowrap;
+  transition:color .4s;
+}
+.prog-node.active .prog-label{ color:rgba(255,255,255,0.9); }
+.prog-node.done .prog-label{ color:#86efac; }
+.prog-connector{
+  width:48px; height:3px;
+  background:rgba(255,255,255,0.2);
+  border-radius:2px;
+  margin-bottom:16px;
+  transition:background .4s;
+}
+.prog-connector.done{ background:#16a34a; }
+
+/* ── Main wrapper ── */
+.lab-wrapper{
+  width:min(1360px,100%);
+  margin:24px auto;
+  padding:0 18px 60px;
+}
+
+/* ── Module card ── */
+.module{
+  display:none;
+  animation:fadeIn .4s ease;
+}
+.module.active{ display:block; }
+
+@keyframes fadeIn{
+  from{ opacity:0; transform:translateY(12px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+
+.module-header{
+  background:linear-gradient(135deg,var(--blue-deep),var(--blue-mid));
+  color:white;
+  border-radius:20px 20px 0 0;
+  padding:20px 28px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+.module-badge{
+  background:rgba(255,255,255,0.2);
+  border:2px solid rgba(255,255,255,0.4);
+  border-radius:50%;
+  width:44px; height:44px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; font-weight:900;
+  flex-shrink:0;
+}
+.module-header h2{ font-size:20px; font-weight:800; }
+.module-header p{ font-size:14px; opacity:.8; margin-top:3px; }
+
+.module-body{
+  background:white;
+  border:1px solid #dbeafe;
+  border-top:none;
+  border-radius:0 0 20px 20px;
+  box-shadow:0 8px 32px rgba(30,58,138,.08);
+  overflow:hidden;
+}
+
+/* ── Two-column layout ── */
+.two-col{
+  display:grid;
+  grid-template-columns:minmax(0,1.1fr) minmax(380px,420px);
+  gap:0;
+}
+.col-plot{
+  padding:22px;
+  border-right:1px solid #e2e8f0;
+}
+.col-steps{
+  padding:22px;
+  overflow-y:auto;
+  max-height:700px;
+}
+
+/* ── Step blocks ── */
+.step{
+  border:1px solid #e2e8f0;
+  background:#f8fafc;
+  border-radius:14px;
+  padding:16px;
+  margin-top:14px;
+}
+.step:first-child{ margin-top:0; }
+.step-title{
+  font-weight:800;
+  color:var(--blue-deep);
+  margin-bottom:12px;
+  font-size:17px;
+}
+
+/* ── Buttons ── */
+button{
+  width:100%;
+  border:none;
+  border-radius:12px;
+  padding:12px;
+  background:var(--blue-mid);
+  color:white;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
+  margin-top:10px;
+  transition:background .2s;
+  font-family:inherit;
+}
+button:hover{ background:#1d4ed8; }
+button:disabled{ background:#94a3b8; cursor:not-allowed; }
+.btn-green{ background:var(--green); }
+.btn-green:hover{ background:#15803d; }
+.btn-slate{ background:var(--slate); }
+.btn-slate:hover{ background:#334155; }
+.btn-yellow{ background:#d97706; }
+.btn-yellow:hover{ background:#b45309; }
+.btn-sm{
+  width:auto;
+  display:inline-block;
+  padding:8px 16px;
+  font-size:13px;
+  border-radius:8px;
+  margin-top:6px;
+}
+
+/* ── Inputs ── */
+input[type="number"], input[type="text"]{
+  width:100%;
+  padding:10px;
+  border-radius:10px;
+  border:1.5px solid #cbd5e1;
+  text-align:center;
+  font-size:15px;
+  font-family:inherit;
+  outline:none;
+  transition:border-color .2s;
+}
+input[type="number"]:focus{ border-color:var(--blue-light); }
+
+.input-row{
+  display:grid;
+  grid-template-columns:60px repeat(3,1fr);
+  gap:8px;
+  margin-bottom:10px;
+  align-items:center;
+}
+.input-row label{
+  font-weight:700;
+  display:flex; justify-content:center; align-items:center;
+}
+input[type="range"]{ width:100%; accent-color:var(--blue-light); }
+
+.num-input-sm{
+  width:64px !important;
+  display:inline-block !important;
+  padding:6px 4px !important;
+  font-size:14px !important;
+  border-radius:6px !important;
+}
+
+/* ── Result boxes ── */
+.result-box{
+  background:var(--blue-pale);
+  border-left:5px solid var(--blue-mid);
+  border-radius:12px;
+  padding:14px;
+  margin-top:12px;
+  line-height:1.9;
+  font-size:15px;
+}
+.result-box.green{
+  background:#f0fdf4;
+  border-left-color:var(--green);
+}
+.result-box.red{
+  background:#fef2f2;
+  border-left-color:var(--red);
+}
+
+/* ── Choice rows ── */
+.choice-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:10px;
+}
+.choice-row.three{ grid-template-columns:1fr 1fr 1fr; }
+.choice-row.four{ grid-template-columns:1fr; gap:8px; }
+.choice{
+  border:1.5px solid #cbd5e1;
+  border-radius:12px;
+  padding:10px;
+  background:white;
+  display:flex; justify-content:center; align-items:center;
+  gap:8px; cursor:pointer;
+  font-size:14px;
+  transition:border-color .2s, background .2s;
+}
+.choice:hover{ border-color:var(--blue-light); background:var(--blue-pale); }
+.choice input[type="radio"]{ accent-color:var(--blue-mid); }
+
+/* ── Feedback ── */
+.feedback{ font-weight:800; font-size:16px; }
+.correct{ color:var(--green); }
+.wrong{ color:var(--red); }
+
+/* ── Latex lines ── */
+.latex-line{ margin:7px 0; font-size:16px; }
+
+/* ── Module 1 slider panel ── */
+.slider-group{
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  border-radius:10px;
+  padding:12px;
+  margin-bottom:12px;
+}
+.slider-label{
+  font-weight:700;
+  font-size:14px;
+  margin-bottom:6px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.slider-row{ display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:4px; }
+.slider-row span.lbl{ width:16px; font-weight:700; color:#64748b; }
+.slider-val{ width:40px; text-align:right; font-weight:700; font-size:13px; }
+
+.cross-result{
+  background:linear-gradient(135deg,#fefce8,#fef9c3);
+  border:2px solid #fbbf24;
+  border-radius:12px;
+  padding:14px;
+  text-align:center;
+  margin-top:12px;
+}
+
+/* ── Blackboard (Module 1 part 2) ── */
+.blackboard-area{
+  background:white;
+  border:1px solid #e2e8f0;
+  border-radius:14px;
+  padding:24px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+.math-grid{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:12px;
+  text-align:center;
+  font-size:26px;
+  font-weight:800;
+  margin-bottom:24px;
+  width:100%;
+}
+.math-cell{
+  padding:8px 4px;
+  border-radius:8px;
+  transition:all .3s;
+}
+.math-cell.dim{ opacity:.18; }
+.math-cell.highlight-x{ color:#ca8a04; background:#fef9c3; border-radius:8px; }
+.math-cell.highlight-y{ color:#16a34a; background:#dcfce7; border-radius:8px; }
+.math-cell.highlight-z{ color:#7c3aed; background:#ede9fe; border-radius:8px; }
+.math-cell.cross-line{ position:relative; }
+.math-cell.cross-line::after{
+  content:'';position:absolute;top:50%;left:-5%;width:110%;height:3px;
+  background:#ef4444;transform:rotate(-15deg);
+}
+.cross-center{ position:relative; }
+
+.step-desc-box{
+  background:var(--blue-pale);
+  border:1px solid #bfdbfe;
+  border-radius:12px;
+  padding:14px 18px;
+  width:100%;
+  text-align:center;
+  min-height:80px;
+  display:flex; flex-direction:column; justify-content:center;
+  gap:6px;
+}
+
+/* ── Complete banner ── */
+.complete-banner{
+  background:linear-gradient(135deg,#16a34a,#15803d);
+  color:white;
+  border-radius:16px;
+  padding:20px;
+  text-align:center;
+  margin-top:18px;
+}
+.complete-banner h3{ font-size:22px; font-weight:900; margin-bottom:8px; }
+.complete-banner p{ font-size:15px; opacity:.9; }
+
+.unlock-btn-wrap{
+  margin-top:16px;
+}
+.unlock-btn{
+  background:white;
+  color:#16a34a;
+  font-weight:900;
+  font-size:16px;
+  border-radius:12px;
+  padding:14px;
+  border:none;
+  cursor:pointer;
+  width:100%;
+  transition:all .2s;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+.unlock-btn:hover{
+  background:#f0fdf4;
+  transform:translateY(-1px);
+  box-shadow:0 4px 16px rgba(0,0,0,.18);
+}
+
+/* ── Hidden ── */
+.hidden{ display:none !important; }
+
+/* ── Plot container ── */
+.plot-box{
+  width:100%;
+  height:660px;
+}
+
+/* ── Small note ── */
+.note{
+  color:#64748b;
+  font-size:13px;
+  margin-top:12px;
+  line-height:1.6;
+}
+
+/* ── Select ── */
+select{
+  width:100%;
+  padding:10px;
+  border-radius:10px;
+  border:1.5px solid #cbd5e1;
+  font-size:15px;
+  margin-top:8px;
+  font-family:inherit;
+}
+
+@media(max-width:980px){
+  .two-col{ grid-template-columns:1fr; }
+  .plot-box{ height:480px; }
+  .col-plot{ border-right:none; border-bottom:1px solid #e2e8f0; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>空間向量數學實驗室</h1>
+  <p>外積幾何意義 · 代數計算 · 公垂向量 · 面積應用</p>
+
+  <div class="progress-track" id="progressTrack">
+    <div class="prog-node active" id="pnode0">
+      <div class="prog-circle">1</div>
+      <div class="prog-label">幾何探索</div>
+    </div>
+    <div class="prog-connector" id="pconn0"></div>
+    <div class="prog-node" id="pnode1">
+      <div class="prog-circle">2</div>
+      <div class="prog-label">公垂驗證</div>
+    </div>
+    <div class="prog-connector" id="pconn1"></div>
+    <div class="prog-node" id="pnode2">
+      <div class="prog-circle">3</div>
+      <div class="prog-label">公垂探究</div>
+    </div>
+    <div class="prog-connector" id="pconn2"></div>
+    <div class="prog-node" id="pnode3">
+      <div class="prog-circle">4</div>
+      <div class="prog-label">面積應用</div>
+    </div>
+  </div>
+</header>
+
+<div class="lab-wrapper">
+
+<!-- ═══════════════════════════════════════════
+     MODULE 1：幾何探索 + 代數計算教學
+═══════════════════════════════════════════ -->
+<div class="module active" id="mod0">
+  <div class="module-header">
+    <div class="module-badge">1</div>
+    <div>
+      <h2>幾何探索與代數計算</h2>
+      <p>拖曳向量，觀察外積的幾何意義，再學習「寫兩次去兩端」的計算心法</p>
+    </div>
+  </div>
+
+  <div class="module-body">
+    <!-- Part A: Geometric Explorer -->
+    <div id="mod0_partA">
+      <div class="two-col">
+        <div class="col-plot">
+          <h2 style="color:var(--blue-deep);margin-bottom:14px;font-size:18px;">3D 座標圖</h2>
+          <div id="plot0" class="plot-box"></div>
+          <p class="note">
+            紅色為 \(\vec{a}\)，藍色為 \(\vec{b}\)，綠色為 \(\vec{a}\times\vec{b}\)。
+          </p>
+        </div>
+
+        <div class="col-steps">
+          <h2 style="color:var(--blue-deep);margin-bottom:14px;font-size:18px;">操作面板</h2>
+
+          <div class="slider-group">
+            <div class="slider-label" style="color:#dc2626;">
+              向量 \(\vec{a}\)
+              <span id="v0_a_val" style="font-family:monospace;font-size:13px;color:#64748b;">(2.0, 1.0, 0.0)</span>
+            </div>
+            <div class="slider-row"><span class="lbl">x</span><input type="range" id="s0_ax" min="-5" max="5" step="0.5" value="2"><span class="slider-val" id="d0_ax">2</span></div>
+            <div class="slider-row"><span class="lbl">y</span><input type="range" id="s0_ay" min="-5" max="5" step="0.5" value="1"><span class="slider-val" id="d0_ay">1</span></div>
+            <div class="slider-row"><span class="lbl">z</span><input type="range" id="s0_az" min="-5" max="5" step="0.5" value="0"><span class="slider-val" id="d0_az">0</span></div>
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label" style="color:#2563eb;">
+              向量 \(\vec{b}\)
+              <span id="v0_b_val" style="font-family:monospace;font-size:13px;color:#64748b;">(1.0, 2.0, 0.0)</span>
+            </div>
+            <div class="slider-row"><span class="lbl">x</span><input type="range" id="s0_bx" min="-5" max="5" step="0.5" value="1"><span class="slider-val" id="d0_bx">1</span></div>
+            <div class="slider-row"><span class="lbl">y</span><input type="range" id="s0_by" min="-5" max="5" step="0.5" value="2"><span class="slider-val" id="d0_by">2</span></div>
+            <div class="slider-row"><span class="lbl">z</span><input type="range" id="s0_bz" min="-5" max="5" step="0.5" value="0"><span class="slider-val" id="d0_bz">0</span></div>
+          </div>
+
+          <div class="cross-result">
+            <div style="font-weight:700;color:#92400e;margin-bottom:6px;">外積 \(\vec{a}\times\vec{b}\)</div>
+            <div id="v0_cross_val" style="font-size:20px;font-weight:900;color:#b45309;font-family:monospace;">(0, 0, 3)</div>
+          </div>
+
+          <div class="step" style="margin-top:16px;">
+            <div class="step-title">觀察重點</div>
+            <div class="latex-line">1. 改變 \(\vec{a}\) 與 \(\vec{b}\) 的方向，外積 \(\vec{a}\times\vec{b}\) 是否始終垂直於兩者所在的平面？</div>
+            <div class="latex-line">2. 當兩向量平行時，外積為何？</div>
+          </div>
+
+          <div class="step" style="margin-top:16px;">
+            <div class="step-title">準備好了嗎？</div>
+            <div class="latex-line">觀察完幾何意義後，點擊下一步學習代數計算方法。</div>
+            <button class="btn-green" onclick="mod0_showPartB()">下一步：學習代數計算 →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Part B: Algebra Tutorial -->
+    <div id="mod0_partB" class="hidden">
+      <div class="two-col">
+        <div class="col-plot" style="background:#f8fafc;">
+          <div class="blackboard-area">
+            <h3 style="font-size:20px;font-weight:900;color:var(--blue-deep);margin-bottom:20px;border-bottom:2px solid var(--blue-tint);padding-bottom:10px;width:100%;text-align:center;">「寫兩次，去兩端」計算心法</h3>
+            <div class="math-grid" id="bb_grid"></div>
+            <div class="step-desc-box">
+              <div id="bb_desc" style="font-size:15px;color:#1e40af;font-weight:700;">請在右側輸入向量座標，並點擊「開始計算」</div>
+              <div id="bb_formula" style="font-size:18px;font-weight:900;color:#1e40af;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-steps">
+          <h2 style="color:var(--blue-deep);margin-bottom:14px;font-size:18px;">代數計算機</h2>
+
+          <div class="step">
+            <div class="step-title">輸入向量</div>
+            <div style="margin-bottom:8px;font-weight:700;color:#dc2626;font-size:14px;">向量 \(\vec{a}\) = (x, y, z)</div>
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+              <input type="number" id="bb_ax" class="num-input-sm" value="2" style="width:100%;border-radius:8px;padding:8px;border:1.5px solid #cbd5e1;font-size:15px;text-align:center;font-family:inherit;">
+              <input type="number" id="bb_ay" class="num-input-sm" value="1" style="width:100%;border-radius:8px;padding:8px;border:1.5px solid #cbd5e1;font-size:15px;text-align:center;font-family:inherit;">
+              <input type="number" id="bb_az" class="num-input-sm" value="0" style="width:100%;border-radius:8px;padding:8px;border:1.5px solid #cbd5e1;font-size:15px;text-align:center;font-family:inherit;">
+            </div>
+            <div style="margin-bottom:8px;font-weight:700;color:#2563eb;font-size:14px;">向量 \(\vec{b}\) = (x, y, z)</div>
+            <div style="display:flex;gap:8px;margin-bottom:14px;">
+              <input type="number" id="bb_bx" class="num-input-sm" value="1" style="width:100%;border-radius:8px;padding:8px;border:1.5px solid #cbd5e1;font-size:15px;text-align:center;font-family:inherit;">
+              <input type="number" id="bb_by" class="num-input-sm" value="2" style="width:100%;border-radius:8px;padding:8px;border:1.5px solid #cbd5e1;font-size:15px;text-align:center;font-family:inherit;">
+              <input type="number" id="bb_bz" class="num-input-sm" value="0" style="width:100%;border-radius:8px;padding:8px;border:1.5px solid #cbd5e1;font-size:15px;text-align:center;font-family:inherit;">
+            </div>
+            <button class="btn-yellow" onclick="bb_start()">載入數據並開始計算</button>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+              <button class="btn-green" id="bb_next_btn" onclick="bb_next()" disabled>下一步</button>
+              <button class="btn-slate" id="bb_skip_btn" onclick="bb_skip()" disabled>看最終結果</button>
+            </div>
+          </div>
+
+          <!-- Quiz -->
+          <div class="step" style="margin-top:16px;">
+            <div class="step-title">🎯 練習題</div>
+            <div style="font-size:15px;margin-bottom:12px;">利用「寫兩次去兩端」計算以下外積：</div>
+            <div style="font-weight:700;color:#dc2626;margin-bottom:4px;">向量 \(\vec{p}\) = (<span id="quiz_p" style="font-family:monospace;"></span>)</div>
+            <div style="font-weight:700;color:#2563eb;margin-bottom:12px;">向量 \(\vec{q}\) = (<span id="quiz_q" style="font-family:monospace;"></span>)</div>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+              <span style="font-weight:700;color:#92400e;">\(\vec{p}\times\vec{q}\) = (</span>
+              <input type="number" id="quiz_x" style="width:64px;padding:6px;border-radius:8px;border:1.5px solid #cbd5e1;text-align:center;font-size:15px;font-family:inherit;" placeholder="x">
+              <span>,</span>
+              <input type="number" id="quiz_y" style="width:64px;padding:6px;border-radius:8px;border:1.5px solid #cbd5e1;text-align:center;font-size:15px;font-family:inherit;" placeholder="y">
+              <span>,</span>
+              <input type="number" id="quiz_z" style="width:64px;padding:6px;border-radius:8px;border:1.5px solid #cbd5e1;text-align:center;font-size:15px;font-family:inherit;" placeholder="z">
+              <span style="font-weight:700;color:#92400e;">)</span>
+            </div>
+            <button onclick="quiz_check()">提交批改</button>
+            <div id="quiz_feedback" class="hidden result-box" style="margin-top:10px;"></div>
+            <button class="btn-slate" onclick="quiz_gen()" style="margin-top:6px;font-size:13px;">🔄 換一題</button>
+          </div>
+
+          <!-- Unlock next -->
+          <div id="mod0_unlock" class="complete-banner hidden">
+            <h3>✅ 第一關完成！</h3>
+            <p>你已掌握外積的幾何意義與代數計算。</p>
+            <div class="unlock-btn-wrap">
+              <button class="unlock-btn" onclick="unlockModule(1)">進入第二關：公垂向量驗證 →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MODULE 2：公垂向量驗證 (file 2)
+═══════════════════════════════════════════ -->
+<div class="module" id="mod1">
+  <div class="module-header">
+    <div class="module-badge">2</div>
+    <div>
+      <h2>公垂向量驗證</h2>
+      <p>計算外積，並用內積驗證外積同時垂直於兩個向量</p>
+    </div>
+  </div>
+
+  <div class="module-body">
+    <div class="two-col">
+      <div class="col-plot">
+        <h2 style="color:var(--blue-deep);margin-bottom:14px;font-size:18px;">3D 座標圖</h2>
+        <div id="plot1" class="plot-box"></div>
+        <p class="note">紅色為 \(\vec{a}\)，藍色為 \(\vec{b}\)，綠色為 \(\vec{a}\times\vec{b}\)。</p>
+      </div>
+
+      <div class="col-steps">
+        <h2 style="color:var(--blue-deep);margin-bottom:14px;font-size:18px;">操作步驟</h2>
+
+        <div class="step" id="m1_s1">
+          <div class="step-title">Step 1　定義兩個向量</div>
+          <div class="input-row">
+            <label>\(\vec{a}\)</label>
+            <input id="m1_a1" type="number" value="2" min="-6" max="6">
+            <input id="m1_a2" type="number" value="1" min="-6" max="6">
+            <input id="m1_a3" type="number" value="1" min="-6" max="6">
+          </div>
+          <div class="input-row">
+            <label>\(\vec{b}\)</label>
+            <input id="m1_b1" type="number" value="1" min="-6" max="6">
+            <input id="m1_b2" type="number" value="2" min="-6" max="6">
+            <input id="m1_b3" type="number" value="-1" min="-6" max="6">
+          </div>
+          <button onclick="m1_step1()">下一步</button>
+        </div>
+
+        <div class="step hidden" id="m1_s2">
+          <div class="step-title">Step 2　計算外積並畫在圖上</div>
+          <button class="btn-green" onclick="m1_step2()">計算並顯示結果</button>
+          <div class="result-box hidden" id="m1_r2"></div>
+          <button class="btn-slate hidden" id="m1_n2" onclick="m1_go3()">下一步</button>
+        </div>
+
+        <div class="step hidden" id="m1_s3">
+          <div class="step-title">Step 3　用內積驗證垂直關係</div>
+          <button class="btn-green" onclick="m1_step3()">展開計算內積</button>
+          <div class="result-box hidden" id="m1_r3"></div>
+          <button class="btn-slate hidden" id="m1_n3" onclick="m1_go4()">下一步</button>
+        </div>
+
+        <div class="step hidden" id="m1_s4">
+          <div class="step-title">Step 4　判斷向量之間的關係</div>
+          <div class="latex-line">\(\vec{a}\) 與 \(\vec{a}\times\vec{b}\) 的關係：</div>
+          <div class="choice-row">
+            <label class="choice"><input type="radio" name="m1_rA" value="parallel"> 平行</label>
+            <label class="choice"><input type="radio" name="m1_rA" value="perpendicular"> 垂直</label>
+          </div>
+          <div class="latex-line" style="margin-top:14px;">\(\vec{b}\) 與 \(\vec{a}\times\vec{b}\) 的關係：</div>
+          <div class="choice-row">
+            <label class="choice"><input type="radio" name="m1_rB" value="parallel"> 平行</label>
+            <label class="choice"><input type="radio" name="m1_rB" value="perpendicular"> 垂直</label>
+          </div>
+          <button onclick="m1_step4()">檢查答案</button>
+          <div class="result-box hidden" id="m1_r4"></div>
+          <button class="btn-slate hidden" id="m1_n4" onclick="m1_go5()">下一步</button>
+        </div>
+
+        <div class="step hidden" id="m1_s5">
+          <div class="step-title">Step 5　觀察公垂向量</div>
+          <div class="latex-line">誰同時與 \(\vec{a}\) 以及 \(\vec{b}\) 垂直？</div>
+          <div class="choice-row three">
+            <label class="choice"><input type="radio" name="m1_rC" value="a"> \(\vec{a}\)</label>
+            <label class="choice"><input type="radio" name="m1_rC" value="b"> \(\vec{b}\)</label>
+            <label class="choice"><input type="radio" name="m1_rC" value="axb"> \(\vec{a}\times\vec{b}\)</label>
+          </div>
+          <button onclick="m1_step5()">檢查答案</button>
+          <div class="result-box hidden" id="m1_r5"></div>
+
+          <div id="mod1_unlock" class="complete-banner hidden" style="margin-top:16px;">
+            <h3>✅ 第二關完成！</h3>
+            <p>你已用內積驗證外積的公垂性質。</p>
+            <div class="unlock-btn-wrap">
+              <button class="unlock-btn" onclick="unlockModule(2)">進入第三關：公垂向量探究 →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MODULE 3：公垂向量探究 (file 3)
+═══════════════════════════════════════════ -->
+<div class="module" id="mod2">
+  <div class="module-header">
+    <div class="module-badge">3</div>
+    <div>
+      <h2>公垂向量的多樣性</h2>
+      <p>探究公垂向量的選取與純量倍的影響</p>
+    </div>
+  </div>
+
+  <div class="module-body">
+    <div class="two-col">
+      <div class="col-plot">
+        <h2 style="color:var(--blue-deep);margin-bottom:14px;font-size:18px;">3D 座標圖</h2>
+        <div id="plot2" class="plot-box"></div>
+      </div>
+
+      <div class="col-steps">
+        <h2 style="color:var(--blue-deep);margin-bottom:14px;font-size:18px;">操作步驟</h2>
+
+        <div class="step" id="m2_intro">
+          <div class="step-title">公垂向量的定義</div>
+          <div class="latex-line">若一個向量同時垂直於 \(\vec a\) 與 \(\vec b\)，則稱這個向量為 \(\vec a\) 與 \(\vec b\) 的一個公垂向量。</div>
+          <div class="latex-line">\[\vec c \perp \vec a \quad\text{且}\quad \vec c \perp \vec b\]</div>
+          <button onclick="m2_go1()">開始實驗</button>
+        </div>
+
+        <div class="step hidden" id="m2_s1">
+          <div class="step-title">Step 1　找出同時垂直於 \(\vec a\) 與 \(\vec b\) 的向量</div>
+          <div class="latex-line">\[\vec a=(1,0,0),\qquad \vec b=(0,1,0)\]</div>
+          <div class="latex-line">請選出一個向量 \(\vec c\)，使它同時垂直於 \(\vec a\) 與 \(\vec b\)。</div>
+          <div class="choice-row" style="grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+            <label class="choice"><input type="radio" name="m2_c" value="100"> \(\vec c=(1,0,0)\)</label>
+            <label class="choice"><input type="radio" name="m2_c" value="010"> \(\vec c=(0,1,0)\)</label>
+            <label class="choice"><input type="radio" name="m2_c" value="001"> \(\vec c=(0,0,1)\)</label>
+            <label class="choice"><input type="radio" name="m2_c" value="110"> \(\vec c=(1,1,0)\)</label>
+          </div>
+          <button onclick="m2_showAngles()">顯示夾角</button>
+          <div class="result-box hidden" id="m2_ang"></div>
+          <button onclick="m2_check1()">確認答案</button>
+          <div class="result-box hidden" id="m2_r1"></div>
+          <button class="btn-slate hidden" id="m2_n1" onclick="m2_go2()">下一步</button>
+        </div>
+
+        <div class="step hidden" id="m2_s2">
+          <div class="step-title">Step 2　觀察 \(t\vec c\) 是否仍為公垂向量</div>
+          <div class="latex-line">\[\vec a=(1,0,0),\quad \vec b=(0,1,0),\quad \vec c=(0,0,1)\]</div>
+          <div class="latex-line">\(t=\) <span id="m2_tval">1</span></div>
+          <input type="range" min="-5" max="5" value="1" step="1" oninput="m2_updateT(this.value)">
+          <div class="result-box" style="margin-top:10px;">目前：<div id="m2_tc">\[t\vec c=1(0,0,1)=(0,0,1)\]</div></div>
+
+          <div class="step-title" style="margin-top:16px;">判斷題</div>
+          <div class="choice-row four">
+            <div>1. \(t=1\) 時，\(t\vec c\) 是否同時垂直於 \(\vec a\) 與 \(\vec b\)？
+              <select id="m2_q1"><option value="">請選擇</option><option value="yes">是</option><option value="no">否</option></select>
+              <div id="m2_r_q1"></div>
+            </div>
+            <div>2. \(t=4\) 時，\(t\vec c\) 是否同時垂直於 \(\vec a\) 與 \(\vec b\)？
+              <select id="m2_q2"><option value="">請選擇</option><option value="yes">是</option><option value="no">否</option></select>
+              <div id="m2_r_q2"></div>
+            </div>
+            <div>3. \(t=-1\) 時，\(t\vec c\) 是否同時垂直於 \(\vec a\) 與 \(\vec b\)？
+              <select id="m2_q3"><option value="">請選擇</option><option value="yes">是</option><option value="no">否</option></select>
+              <div id="m2_r_q3"></div>
+            </div>
+            <div>4. \(t=-4\) 時，\(t\vec c\) 是否同時垂直於 \(\vec a\) 與 \(\vec b\)？
+              <select id="m2_q4"><option value="">請選擇</option><option value="yes">是</option><option value="no">否</option></select>
+              <div id="m2_r_q4"></div>
+            </div>
+          </div>
+          <button onclick="m2_checkQuiz()">確認答案</button>
+          <div class="result-box hidden" id="m2_final"></div>
+
+          <div id="mod2_unlock" class="complete-banner hidden" style="margin-top:16px;">
+            <h3>✅ 第三關完成！</h3>
+            <p>你已了解公垂向量的多樣性與純量倍性質。</p>
+            <div class="unlock-btn-wrap">
+              <button class="unlock-btn" onclick="unlockModule(3)">進入第四關：面積應用 →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MODULE 4：面積應用 (file 4)
+═══════════════════════════════════════════ -->
+<div class="module" id="mod3">
+  <div class="module-header">
+    <div class="module-badge">4</div>
+    <div>
+      <h2>外積與平行四邊形面積</h2>
+      <p>拖曳向量，觀察外積長度等於平行四邊形面積</p>
+    </div>
+  </div>
+
+  <div class="module-body">
+    <div class="two-col">
+      <div class="col-plot">
+        <h2 style="color:var(--blue-deep);margin-bottom:14px;font-size:18px;">3D 座標圖</h2>
+        <div id="plot3" class="plot-box"></div>
+        <p class="note">紅色為 \(\vec{a}\)，藍色為 \(\vec{b}\)，紫色為 \(\vec{a}\times\vec{b}\)，黃色為平行四邊形面積。</p>
+      </div>
+
+      <div class="col-steps">
+        <h2 style="color:var(--blue-deep);margin-bottom:14px;font-size:18px;">向量調整</h2>
+
+        <div class="slider-group">
+          <div class="slider-label" style="color:#dc2626;">
+            向量 \(\vec{a}\)
+            <span id="v3_a_val" style="font-family:monospace;font-size:13px;color:#64748b;">(3.0, 1.0, 0.0)</span>
+          </div>
+          <div class="slider-row"><span class="lbl">x</span><input type="range" id="s3_ax" min="-5" max="5" step="0.1" value="3"><span class="slider-val" id="d3_ax">3</span></div>
+          <div class="slider-row"><span class="lbl">y</span><input type="range" id="s3_ay" min="-5" max="5" step="0.1" value="1"><span class="slider-val" id="d3_ay">1</span></div>
+          <div class="slider-row"><span class="lbl">z</span><input type="range" id="s3_az" min="-5" max="5" step="0.1" value="0"><span class="slider-val" id="d3_az">0</span></div>
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label" style="color:#2563eb;">
+            向量 \(\vec{b}\)
+            <span id="v3_b_val" style="font-family:monospace;font-size:13px;color:#64748b;">(1.0, 3.0, 0.0)</span>
+          </div>
+          <div class="slider-row"><span class="lbl">x</span><input type="range" id="s3_bx" min="-5" max="5" step="0.1" value="1"><span class="slider-val" id="d3_bx">1</span></div>
+          <div class="slider-row"><span class="lbl">y</span><input type="range" id="s3_by" min="-5" max="5" step="0.1" value="3"><span class="slider-val" id="d3_by">3</span></div>
+          <div class="slider-row"><span class="lbl">z</span><input type="range" id="s3_bz" min="-5" max="5" step="0.1" value="0"><span class="slider-val" id="d3_bz">0</span></div>
+        </div>
+
+        <div id="m3_math" style="background:var(--blue-pale);border:1.5px solid #bfdbfe;border-radius:12px;padding:16px;margin-top:4px;line-height:2;">
+        </div>
+
+        <div class="step" style="margin-top:16px;">
+          <div class="step-title">總結公式</div>
+          <div class="latex-line">\[S_{\text{平行四邊形}} = |\vec{a}\times\vec{b}|\]</div>
+          <div class="latex-line">\[S_{\triangle} = \frac{1}{2}|\vec{a}\times\vec{b}|\]</div>
+        </div>
+
+        <div class="complete-banner" style="margin-top:16px;">
+          <h3>🎉 全部完成！</h3>
+          <p>恭喜你完成了所有四個實驗模組！你已掌握空間向量外積的幾何意義、代數計算、公垂性質與面積應用。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /lab-wrapper -->
+
+<script>
+// ──────────────────────────────────────────
+// Utility
+// ──────────────────────────────────────────
+function cross(a,b){ return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]]; }
+function dot(a,b){ return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]; }
+function norm(v){ return Math.sqrt(dot(v,v)); }
+function angle(u,v){ return Math.round(Math.acos(Math.max(-1,Math.min(1,dot(u,v)/(norm(u)*norm(v)))))*180/Math.PI); }
+
+function updateMathJax(el){
+  if(window.MathJax && MathJax.typesetPromise){
+    MathJax.typesetPromise(el ? [el] : undefined);
+  }
+}
+
+// ──────────────────────────────────────────
+// Progress / Unlock system
+// ──────────────────────────────────────────
+let currentModule = 0;
+
+function unlockModule(idx){
+  // Mark previous as done
+  document.getElementById('pnode'+(idx-1)).classList.remove('active');
+  document.getElementById('pnode'+(idx-1)).classList.add('done');
+  document.getElementById('pconn'+(idx-1)).classList.add('done');
+  // Activate new
+  document.getElementById('pnode'+idx).classList.add('active');
+  // Switch module
+  document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+  document.getElementById('mod'+idx).classList.add('active');
+  currentModule = idx;
+  // Init plots
+  if(idx===1){ m1_init(); }
+  if(idx===2){ m2_init(); }
+  if(idx===3){ m3_init(); }
+  // Scroll to top
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ──────────────────────────────────────────
+// Plotly helpers (white theme like file 2/3)
+// ──────────────────────────────────────────
+const PLOT_LAYOUT = {
+  margin:{l:0,r:0,t:0,b:0},
+  scene:{
+    xaxis:{title:"",range:[-6,6],showgrid:true,zeroline:false},
+    yaxis:{title:"",range:[-6,6],showgrid:true,zeroline:false},
+    zaxis:{title:"",range:[-6,6],showgrid:true,zeroline:false},
+    aspectmode:"cube",
+    camera:{eye:{x:1.5,y:1.5,z:1.2}}
+  },
+  paper_bgcolor:"white",
+  plot_bgcolor:"white"
+};
+
+function vecTrace(v,name,color){
+  return{type:"scatter3d",mode:"lines+markers+text",
+    x:[0,v[0]],y:[0,v[1]],z:[0,v[2]],
+    text:["",name],textposition:"top center",
+    line:{color,width:8},marker:{size:4,color},name};
+}
+function coneTrace(v,color){
+  const n=norm(v); if(n<0.01)return null;
+  return{type:"cone",x:[v[0]],y:[v[1]],z:[v[2]],
+    u:[v[0]/n],v:[v[1]/n],w:[v[2]/n],
+    sizemode:"absolute",sizeref:0.35,anchor:"tip",
+    colorscale:[[0,color],[1,color]],showscale:false,showlegend:false};
+}
+function axisTraces(len=6){
+  const col="#111827";
+  const lines=[
+    {type:"scatter3d",mode:"lines",x:[-len,len],y:[0,0],z:[0,0],line:{color:col,width:5},showlegend:false},
+    {type:"scatter3d",mode:"lines",x:[0,0],y:[-len,len],z:[0,0],line:{color:col,width:5},showlegend:false},
+    {type:"scatter3d",mode:"lines",x:[0,0],y:[0,0],z:[-len,len],line:{color:col,width:5},showlegend:false},
+    {type:"scatter3d",mode:"text",x:[len*0.9],y:[0],z:[0],text:["x軸"],textfont:{size:18,color:col},showlegend:false},
+    {type:"scatter3d",mode:"text",x:[0],y:[len*0.9],z:[0],text:["y軸"],textfont:{size:18,color:col},showlegend:false},
+    {type:"scatter3d",mode:"text",x:[0],y:[0],z:[len*0.9],text:["z軸"],textfont:{size:18,color:col},showlegend:false},
+  ];
+  // Cone arrowheads on axes
+  [[len,0,0],[0,len,0],[0,0,len]].forEach(pos=>{
+    const n=Math.sqrt(pos[0]**2+pos[1]**2+pos[2]**2);
+    lines.push({type:"cone",x:[pos[0]],y:[pos[1]],z:[pos[2]],u:[pos[0]/n],v:[pos[1]/n],w:[pos[2]/n],sizemode:"absolute",sizeref:0.4,anchor:"tip",colorscale:[[0,col],[1,col]],showscale:false,showlegend:false});
+  });
+  return lines;
+}
+
+// ──────────────────────────────────────────
+// MODULE 0 - Part A: Geometric Explorer
+// ──────────────────────────────────────────
+function getSlider(id){
+  const v = parseFloat(document.getElementById(id).value);
+  return v;
+}
+
+function mod0_update(){
+  const ax=getSlider('s0_ax'), ay=getSlider('s0_ay'), az=getSlider('s0_az');
+  const bx=getSlider('s0_bx'), by=getSlider('s0_by'), bz=getSlider('s0_bz');
+  ['ax','ay','az'].forEach(k=>{ document.getElementById('d0_'+k).textContent=getSlider('s0_'+k); });
+  ['bx','by','bz'].forEach(k=>{ document.getElementById('d0_'+k).textContent=getSlider('s0_'+k); });
+  document.getElementById('v0_a_val').textContent=`(${ax}, ${ay}, ${az})`;
+  document.getElementById('v0_b_val').textContent=`(${bx}, ${by}, ${bz})`;
+  const a=[ax,ay,az], b=[bx,by,bz];
+  const c=cross(a,b); const area=norm(c);
+  document.getElementById('v0_cross_val').textContent=`(${c[0].toFixed(1)}, ${c[1].toFixed(1)}, ${c[2].toFixed(1)})`;
+
+  const data=[...axisTraces(), vecTrace(a,"a向量","#dc2626"), vecTrace(b,"b向量","#2563eb")];
+  const cones=[coneTrace(a,"#dc2626"),coneTrace(b,"#2563eb")];
+  if(area>0.01){
+    data.push(vecTrace(c,"a×b","#16a34a"));
+    cones.push(coneTrace(c,"#16a34a"));
+  }
+  data.push(...cones.filter(Boolean));
+  Plotly.react("plot0",data,PLOT_LAYOUT,{responsive:true,displaylogo:false});
+}
+
+document.querySelectorAll('[id^="s0_"]').forEach(el=>el.addEventListener('input',mod0_update));
+
+function mod0_showPartB(){
+  document.getElementById('mod0_partA').classList.add('hidden');
+  document.getElementById('mod0_partB').classList.remove('hidden');
+  quiz_gen();
+}
+
+// ──────────────────────────────────────────
+// MODULE 0 - Part B: Blackboard
+// ──────────────────────────────────────────
+let bbStep=0, bbA=[2,1,0], bbB=[1,2,0];
+
+function bb_start(){
+  bbA=[parseInt(document.getElementById('bb_ax').value)||0,
+       parseInt(document.getElementById('bb_ay').value)||0,
+       parseInt(document.getElementById('bb_az').value)||0];
+  bbB=[parseInt(document.getElementById('bb_bx').value)||0,
+       parseInt(document.getElementById('bb_by').value)||0,
+       parseInt(document.getElementById('bb_bz').value)||0];
+  bbStep=1;
+  document.getElementById('bb_next_btn').disabled=false;
+  document.getElementById('bb_skip_btn').disabled=false;
+  bb_render();
+}
+function bb_next(){ if(bbStep<5){ bbStep++; bb_render(); } if(bbStep===5) document.getElementById('bb_next_btn').disabled=true; }
+function bb_skip(){ bbStep=5; bb_render(); document.getElementById('bb_next_btn').disabled=true; }
+
+function bb_render(){
+  const grid=document.getElementById('bb_grid');
+  const desc=document.getElementById('bb_desc');
+  const formula=document.getElementById('bb_formula');
+  const aS=[...bbA,...bbA], bS=[...bbB,...bbB];
+  let html='';
+  const rx=bbA[1]*bbB[2]-bbA[2]*bbB[1];
+  const ry=bbA[2]*bbB[0]-bbA[0]*bbB[2];
+  const rz=bbA[0]*bbB[1]-bbA[1]*bbB[0];
+
+  for(let i=0;i<6;i++){
+    let cls="math-cell";
+    if(bbStep>=2&&(i===0||i===5)) cls+=" cross-line dim";
+    if(bbStep===3&&(i===1)) cls+=" highlight-x";
+    if(bbStep===3&&(i===2)) cls+=" highlight-x";
+    if(bbStep===4&&(i===2)) cls+=" highlight-y";
+    if(bbStep===4&&(i===3)) cls+=" highlight-y";
+    if(bbStep===5&&(i===3)) cls+=" highlight-z";
+    if(bbStep===5&&(i===4)) cls+=" highlight-z";
+    if(bbStep>=3&&i!==0&&i!==5){
+      if(bbStep===3&&i>2) cls+=" dim";
+      if(bbStep===4&&(i<2||i>3)) cls+=" dim";
+      if(bbStep===5&&i<3) cls+=" dim";
+    }
+    html+=`<div class="${cls}" style="color:#dc2626">${aS[i]}</div>`;
+  }
+  for(let i=0;i<6;i++){
+    let cls="math-cell";
+    if(bbStep>=2&&(i===0||i===5)) cls+=" cross-line dim";
+    if(bbStep===3&&(i===1||i===2)) cls+=" highlight-x";
+    if(bbStep===4&&(i===2||i===3)) cls+=" highlight-y";
+    if(bbStep===5&&(i===3||i===4)) cls+=" highlight-z";
+    if(bbStep>=3&&i!==0&&i!==5){
+      if(bbStep===3&&i>2) cls+=" dim";
+      if(bbStep===4&&(i<2||i>3)) cls+=" dim";
+      if(bbStep===5&&i<3) cls+=" dim";
+    }
+    html+=`<div class="${cls}" style="color:#2563eb">${bS[i]}</div>`;
+  }
+  grid.innerHTML=html;
+
+  // 建立各分量的算式字串
+  const strX = `<span style="color:#ca8a04">x = (${bbA[1]}×${bbB[2]}) − (${bbB[1]}×${bbA[2]}) = ${rx}</span>`;
+  const strY = `<span style="color:#16a34a">y = (${bbA[2]}×${bbB[0]}) − (${bbB[2]}×${bbA[0]}) = ${ry}</span>`;
+  const strZ = `<span style="color:#7c3aed">z = (${bbA[0]}×${bbB[1]}) − (${bbB[0]}×${bbA[1]}) = ${rz}</span>`;
+
+  if(bbStep===0){ desc.innerHTML="請在右側輸入座標，並點擊「載入數據並開始計算」"; formula.innerHTML=""; }
+  else if(bbStep===1){ desc.innerHTML="Step 1：將兩向量的座標依序各寫兩次。"; formula.innerHTML=""; }
+  else if(bbStep===2){ desc.innerHTML="Step 2：去兩端。將最左與最右的數字劃掉不看。"; formula.innerHTML=""; }
+  else if(bbStep===3){ 
+    desc.innerHTML="Step 3：計算 <i>x</i> 分量（左上×右下 − 左下×右上）"; 
+    formula.innerHTML=`<div style="text-align:left;display:inline-block;line-height:1.6;margin-top:8px;">${strX}<br><b style="color:var(--blue-deep)">(x, y, z) = (${rx}, y, z)</b></div>`; 
+  }
+  else if(bbStep===4){ 
+    desc.innerHTML="Step 4：計算 <i>y</i> 分量（往右移一格）"; 
+    formula.innerHTML=`<div style="text-align:left;display:inline-block;line-height:1.6;margin-top:8px;">${strX}<br>${strY}<br><b style="color:var(--blue-deep)">(x, y, z) = (${rx}, ${ry}, z)</b></div>`; 
+  }
+  else if(bbStep===5){ 
+    desc.innerHTML="Step 5：計算 <i>z</i> 分量。完成！"; 
+    formula.innerHTML=`<div style="text-align:left;display:inline-block;line-height:1.6;margin-top:8px;">${strX}<br>${strY}<br>${strZ}<br><b style="color:var(--blue-deep)">a × b = (${rx}, ${ry}, ${rz})</b></div>`; 
+  }
+  updateMathJax(document.querySelector('.blackboard-area'));
+}
+
+// ──────────────────────────────────────────
+// MODULE 0 - Quiz
+// ──────────────────────────────────────────
+let qAns=[0,0,0], qP=[0,0,0], qQ=[0,0,0];
+
+function quiz_gen(){
+  const r=()=>Math.floor(Math.random()*7)-3;
+  qP=[r(),r(),r()]; qQ=[r(),r(),r()];
+  if(JSON.stringify(qP)===JSON.stringify(qQ)) qQ[0]+=1;
+  qAns=cross(qP,qQ);
+  document.getElementById('quiz_p').textContent=qP.join(', ');
+  document.getElementById('quiz_q').textContent=qQ.join(', ');
+  document.getElementById('quiz_x').value='';
+  document.getElementById('quiz_y').value='';
+  document.getElementById('quiz_z').value='';
+  const fb=document.getElementById('quiz_feedback');
+  fb.classList.add('hidden'); fb.className='hidden result-box';
+}
+
+function quiz_check(){
+  const ux=parseInt(document.getElementById('quiz_x').value);
+  const uy=parseInt(document.getElementById('quiz_y').value);
+  const uz=parseInt(document.getElementById('quiz_z').value);
+  const fb=document.getElementById('quiz_feedback');
+  fb.classList.remove('hidden');
+  if(isNaN(ux)||isNaN(uy)||isNaN(uz)){ fb.className='result-box'; fb.innerHTML='⚠️ 請填寫完整！'; return; }
+  if(ux===qAns[0]&&uy===qAns[1]&&uz===qAns[2]){
+    fb.className='result-box green';
+    fb.innerHTML='<span class="feedback correct">🎉 完全正確！答案是 ('+qAns.join(', ')+')</span>';
+    document.getElementById('mod0_unlock').classList.remove('hidden');
+    updateMathJax(document.getElementById('mod0_unlock'));
+  } else {
+    fb.className='result-box red';
+    fb.innerHTML='<span class="feedback wrong">❌ 算錯囉！<br><small>提示：將向量填入左側計算機，一步步檢查看看。</small></span>';
+    // Fill blackboard inputs
+    document.getElementById('bb_ax').value=qP[0];
+    document.getElementById('bb_ay').value=qP[1];
+    document.getElementById('bb_az').value=qP[2];
+    document.getElementById('bb_bx').value=qQ[0];
+    document.getElementById('bb_by').value=qQ[1];
+    document.getElementById('bb_bz').value=qQ[2];
+  }
+}
+
+// ──────────────────────────────────────────
+// MODULE 1 - Perpendicularity Verification
+// ──────────────────────────────────────────
+let m1_a=[2,1,1], m1_b=[1,2,-1], m1_c=[0,0,0];
+
+function m1_init(){ m1_drawPlot(1); updateMathJax(); }
+
+function m1_drawPlot(step){
+  const data=[...axisTraces()];
+  const cones=[];
+  data.push(vecTrace(m1_a,"a向量","#dc2626"));
+  data.push(vecTrace(m1_b,"b向量","#2563eb"));
+  cones.push(coneTrace(m1_a,"#dc2626"));
+  cones.push(coneTrace(m1_b,"#2563eb"));
+  if(step>=2){
+    data.push(vecTrace(m1_c,"a×b","#16a34a"));
+    const cc=coneTrace(m1_c,"#16a34a"); if(cc) cones.push(cc);
+  }
+  data.push(...cones.filter(Boolean));
+  Plotly.newPlot("plot1",data,PLOT_LAYOUT,{responsive:true,displaylogo:false});
+}
+
+function m1_step1(){
+  m1_a=[Number(document.getElementById('m1_a1').value),Number(document.getElementById('m1_a2').value),Number(document.getElementById('m1_a3').value)];
+  m1_b=[Number(document.getElementById('m1_b1').value),Number(document.getElementById('m1_b2').value),Number(document.getElementById('m1_b3').value)];
+  m1_c=cross(m1_a,m1_b);
+  m1_drawPlot(1);
+  document.getElementById('m1_s1').classList.add('hidden');
+  document.getElementById('m1_s2').classList.remove('hidden');
+  updateMathJax();
+}
+
+function m1_step2(){
+  m1_c=cross(m1_a,m1_b);
+  m1_drawPlot(2);
+  const r=document.getElementById('m1_r2');
+  r.classList.remove('hidden');
+  r.innerHTML=`<div class="latex-line">\\(\\vec{a}\\times\\vec{b}=(${m1_c[0]},${m1_c[1]},${m1_c[2]})\\)</div>`;
+  document.getElementById('m1_n2').classList.remove('hidden');
+  updateMathJax(r);
+}
+
+function m1_go3(){ document.getElementById('m1_s2').classList.add('hidden'); document.getElementById('m1_s3').classList.remove('hidden'); updateMathJax(); }
+
+function m1_step3(){
+  const acT=[m1_a[0]*m1_c[0],m1_a[1]*m1_c[1],m1_a[2]*m1_c[2]];
+  const bcT=[m1_b[0]*m1_c[0],m1_b[1]*m1_c[1],m1_b[2]*m1_c[2]];
+  const ac=dot(m1_a,m1_c), bc=dot(m1_b,m1_c);
+  const r=document.getElementById('m1_r3');
+  r.classList.remove('hidden');
+  r.innerHTML=`
+    <div class="latex-line">\\(\\vec{a}\\cdot(\\vec{a}\\times\\vec{b})=(${m1_a.join(',')})\\cdot(${m1_c.join(',')})\\)</div>
+    <div class="latex-line">\\(=${acT[0]}+${acT[1]}+${acT[2]}=${ac}\\)</div>
+    <hr style="border:0;border-top:1px solid #bfdbfe;margin:8px 0;">
+    <div class="latex-line">\\(\\vec{b}\\cdot(\\vec{a}\\times\\vec{b})=(${m1_b.join(',')})\\cdot(${m1_c.join(',')})\\)</div>
+    <div class="latex-line">\\(=${bcT[0]}+${bcT[1]}+${bcT[2]}=${bc}\\)</div>`;
+  document.getElementById('m1_n3').classList.remove('hidden');
+  updateMathJax(r);
+}
+
+function m1_go4(){ document.getElementById('m1_s3').classList.add('hidden'); document.getElementById('m1_s4').classList.remove('hidden'); updateMathJax(); }
+
+function m1_step4(){
+  const rA=document.querySelector('input[name="m1_rA"]:checked')?.value||"";
+  const rB=document.querySelector('input[name="m1_rB"]:checked')?.value||"";
+  const ok=rA==="perpendicular"&&rB==="perpendicular";
+  const r=document.getElementById('m1_r4');
+  r.classList.remove('hidden');
+  if(ok){
+    r.className='result-box green';
+    r.innerHTML=`<div class="feedback correct">答對了！</div><div class="latex-line">\\(\\vec{a}\\cdot(\\vec{a}\\times\\vec{b})=0\\)，\\(\\vec{b}\\cdot(\\vec{a}\\times\\vec{b})=0\\)</div>`;
+    document.getElementById('m1_n4').classList.remove('hidden');
+  } else {
+    r.className='result-box red';
+    r.innerHTML=`<div class="feedback wrong">再想想。</div><div class="latex-line">提示：內積為零 → 垂直</div>`;
+  }
+  updateMathJax(r);
+}
+
+function m1_go5(){ document.getElementById('m1_s4').classList.add('hidden'); document.getElementById('m1_s5').classList.remove('hidden'); updateMathJax(); }
+
+function m1_step5(){
+  const ans=document.querySelector('input[name="m1_rC"]:checked')?.value||"";
+  const r=document.getElementById('m1_r5');
+  r.classList.remove('hidden');
+  if(ans==="axb"){
+    r.className='result-box green';
+    r.innerHTML=`<div class="feedback correct">答對了！</div><div class="latex-line">\\(\\vec{a}\\times\\vec{b}\\) 同時與 \\(\\vec{a}\\) 以及 \\(\\vec{b}\\) 垂直，是一個公垂向量。</div>`;
+    document.getElementById('mod1_unlock').classList.remove('hidden');
+  } else {
+    r.className='result-box red';
+    r.innerHTML=`<div class="feedback wrong">再想想。</div>`;
+  }
+  updateMathJax(r);
+}
+
+// ──────────────────────────────────────────
+// MODULE 2 - Common Perpendicular
+// ──────────────────────────────────────────
+const m2_a=[1,0,0], m2_b=[0,1,0];
+let m2_cur=null, m2_t=1, m2_step=0, m2_show_ang=false;
+
+function m2_init(){ m2_step=0; m2_cur=null; m2_show_ang=false; m2_drawPlot(); updateMathJax(); }
+
+function m2_drawPlot(){
+  const data=[
+    ...axisTraces(),
+    {type:"mesh3d",x:[-6,6,6,-6],y:[-6,-6,6,6],z:[0,0,0,0],i:[0,0],j:[1,2],k:[2,3],opacity:0.18,color:"#93c5fd",showlegend:false,hoverinfo:"skip"}
+  ];
+  const cones=[];
+  if(m2_step>=1){
+    data.push(vecTrace(m2_a,"a向量","#dc2626"));
+    data.push(vecTrace(m2_b,"b向量","#2563eb"));
+    cones.push(coneTrace(m2_a,"#dc2626"));
+    cones.push(coneTrace(m2_b,"#2563eb"));
+    if(m2_cur){
+      if(m2_step===1) {
+        data.push(vecTrace(m2_cur,"c向量","#16a34a"));
+        const cc=coneTrace(m2_cur,"#16a34a"); if(cc) cones.push(cc);
+        
+        if(m2_show_ang) {
+          const arcA = getArcTrace(m2_a, m2_cur, "#dc2626", 1.2); if(arcA) data.push(arcA);
+          const arcB = getArcTrace(m2_b, m2_cur, "#2563eb", 1.2); if(arcB) data.push(arcB);
+        }
+      } else if (m2_step===2) {
+        data.push(vecTrace(m2_cur,"tc向量","#16a34a"));
+        const cc=coneTrace(m2_cur,"#16a34a"); if(cc) cones.push(cc);
+      }
+    }
+  }
+  data.push(...cones.filter(Boolean));
+  Plotly.react("plot2",data,PLOT_LAYOUT,{responsive:true,displaylogo:false});
+}
+
+function m2_go1(){ m2_step=1; m2_show_ang=false; document.getElementById('m2_intro').classList.add('hidden'); document.getElementById('m2_s1').classList.remove('hidden'); m2_cur=null; m2_drawPlot(); updateMathJax(); }
+
+function m2_onRadioChange(){
+  m2_show_ang=false;
+  document.getElementById('m2_ang').classList.add('hidden');
+  m2_cur=m2_getC();
+  m2_drawPlot();
+}
+
+function m2_getC(){
+  const v=document.querySelector('input[name="m2_c"]:checked')?.value;
+  if(v==="100") return [1,0,0];
+  if(v==="010") return [0,1,0];
+  if(v==="001") return [0,0,1];
+  if(v==="110") return [1,1,0];
+  return null;
+}
+
+function m2_showAngles(){
+  const sel=m2_getC();
+  const box=document.getElementById('m2_ang');
+  box.classList.remove('hidden');
+  if(!sel){ box.innerHTML='<span class="wrong">請先選擇一個向量。</span>'; return; }
+  m2_cur=sel; m2_show_ang=true; m2_drawPlot();
+  const aA=angle(m2_a,sel), aB=angle(m2_b,sel);
+  box.innerHTML=`<div class="latex-line">你選擇：\\(\\vec c=(${sel.join(',')})\\)</div><div class="latex-line">\\(\\angle(\\vec a,\\vec c)=${aA}^{\\circ}\\)</div><div class="latex-line">\\(\\angle(\\vec b,\\vec c)=${aB}^{\\circ}\\)</div>`;
+  updateMathJax(box);
+}
+
+function m2_check1(){
+  const sel=m2_getC();
+  const r=document.getElementById('m2_r1');
+  r.classList.remove('hidden');
+  if(!sel){ r.innerHTML='<span class="wrong">請先選擇。</span>'; return; }
+  m2_cur=sel; m2_drawPlot();
+  const aA=angle(m2_a,sel), aB=angle(m2_b,sel);
+  if(aA===90&&aB===90){
+    r.className='result-box green';
+    r.innerHTML=`<div class="feedback correct">答對了！</div><div class="latex-line">\\(\\angle(\\vec a,\\vec c)=90^{\\circ}\\)，\\(\\angle(\\vec b,\\vec c)=90^{\\circ}\\)，所以 \\(\\vec c\\) 同時垂直於兩者。</div>`;
+    document.getElementById('m2_n1').classList.remove('hidden');
+  } else {
+    r.className='result-box red';
+    r.innerHTML=`<div class="feedback wrong">再仔細找找看。</div>`;
+  }
+  updateMathJax(r);
+}
+
+function m2_go2(){ m2_step=2; document.getElementById('m2_s1').classList.add('hidden'); document.getElementById('m2_s2').classList.remove('hidden'); m2_updateT(1); }
+
+function m2_updateT(v){
+  const t=Number(v);
+  document.getElementById('m2_tval').textContent=t;
+  m2_cur=[0,0,t]; m2_drawPlot();
+  document.getElementById('m2_tc').innerHTML=`\\[t\\vec c=${t}(0,0,1)=(0,0,${t})\\]`;
+  updateMathJax(document.getElementById('m2_tc').parentElement);
+}
+
+function m2_checkQuiz(){
+  const ans=["yes","yes","yes","yes"];
+  let allOk=true;
+  for(let i=1;i<=4;i++){
+    const u=document.getElementById('m2_q'+i).value;
+    const r=document.getElementById('m2_r_q'+i);
+    if(u===ans[i-1]){ r.innerHTML='<span class="correct">✓ 正確</span>'; }
+    else { r.innerHTML='<span class="wrong">✗ 錯誤</span>'; allOk=false; }
+  }
+  const final=document.getElementById('m2_final');
+  final.classList.remove('hidden');
+  if(allOk){
+    final.className='result-box green';
+    final.innerHTML=`<div class="feedback correct">全部答對！</div>
+      <div class="latex-line">\\(\\vec a\\cdot\\vec c=0\\)，\\(\\vec b\\cdot\\vec c=0\\)</div>
+      <div class="latex-line">\\[\\boxed{t\\vec c\\text{ 仍然是 }\\vec a\\text{ 與 }\\vec b\\text{ 的公垂向量}}\\]</div>`;
+    document.getElementById('mod2_unlock').classList.remove('hidden');
+  } else {
+    final.className='result-box red';
+    final.innerHTML='<div class="feedback wrong">還有題目答錯，請再檢查。</div>';
+  }
+  updateMathJax(final);
+}
+
+// ──────────────────────────────────────────
+// MODULE 3 - Area Application
+// ──────────────────────────────────────────
+function m3_init(){
+  ['ax','ay','az','bx','by','bz'].forEach(k=>{
+    document.getElementById('s3_'+k).addEventListener('input',m3_update);
+  });
+  m3_update();
+}
+
+function m3_update(){
+  const ax=parseFloat(document.getElementById('s3_ax').value);
+  const ay=parseFloat(document.getElementById('s3_ay').value);
+  const az=parseFloat(document.getElementById('s3_az').value);
+  const bx=parseFloat(document.getElementById('s3_bx').value);
+  const by=parseFloat(document.getElementById('s3_by').value);
+  const bz=parseFloat(document.getElementById('s3_bz').value);
+
+  ['ax','ay','az'].forEach(k=>document.getElementById('d3_'+k).textContent=parseFloat(document.getElementById('s3_'+k).value));
+  ['bx','by','bz'].forEach(k=>document.getElementById('d3_'+k).textContent=parseFloat(document.getElementById('s3_'+k).value));
+  document.getElementById('v3_a_val').textContent=`(${ax}, ${ay}, ${az})`;
+  document.getElementById('v3_b_val').textContent=`(${bx}, ${by}, ${bz})`;
+
+  const a=[ax,ay,az], b=[bx,by,bz];
+  const c=cross(a,b); const area=norm(c);
+  const math=document.getElementById('m3_math');
+  math.innerHTML=`
+    <div class="latex-line">\\(\\vec{a}=[${ax},${ay},${az}]\\)</div>
+    <div class="latex-line">\\(\\vec{b}=[${bx},${by},${bz}]\\)</div>
+    <hr style="border:0;border-top:1px solid #bfdbfe;margin:8px 0;">
+    <div class="latex-line">\\(\\vec{a}\\times\\vec{b}=[${c[0].toFixed(2)},${c[1].toFixed(2)},${c[2].toFixed(2)}]\\)</div>
+    <div class="latex-line">\\(|\\vec{a}\\times\\vec{b}|=${area.toFixed(3)}\\)</div>
+    <div class="latex-line" style="color:#ca8a04;font-weight:700;">平行四邊形面積 = ${area.toFixed(3)}</div>
+    <div class="latex-line" style="color:#7c3aed;">三角形面積 = ${(area/2).toFixed(3)}</div>`;
+  updateMathJax(math);
+
+  const data=[...axisTraces(), vecTrace(a,"a向量","#dc2626"), vecTrace(b,"b向量","#2563eb")];
+  const cones=[coneTrace(a,"#dc2626"),coneTrace(b,"#2563eb")];
+  if(area>0.01){
+    data.push(vecTrace(c,"a×b","#9333ea"));
+    const cc=coneTrace(c,"#9333ea"); if(cc) cones.push(cc);
+    const s=[ax+bx,ay+by,az+bz];
+    data.push({type:"mesh3d",x:[0,ax,s[0],bx],y:[0,ay,s[1],by],z:[0,az,s[2],bz],i:[0,0],j:[1,2],k:[2,3],opacity:0.35,color:"#fbbf24",showlegend:false,hoverinfo:"skip"});
+  }
+  data.push(...cones.filter(Boolean));
+  Plotly.react("plot3",data,PLOT_LAYOUT,{responsive:true,displaylogo:false});
+}
+
+// ──────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────
+window.addEventListener('load',()=>{
+  mod0_update();
+  bb_render();
+  updateMathJax();
+});
+</script>
+</body>
+</html>
