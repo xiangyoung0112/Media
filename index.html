@@ -802,8 +802,8 @@ select{
   <div class="module-header">
     <div class="module-badge">4</div>
     <div>
-      <h2>外積與平行四邊形面積</h2>
-      <p>拖曳向量，觀察外積長度等於平行四邊形面積</p>
+      <h2>外積與面積應用</h2>
+      <p>從幾何觀察到公式推導，計算平行四邊形與三角形面積</p>
     </div>
   </div>
 
@@ -812,45 +812,151 @@ select{
       <div class="col-plot">
         <h2 style="color:var(--blue-deep);margin-bottom:14px;font-size:18px;">3D 座標圖</h2>
         <div id="plot3" class="plot-box"></div>
-        <p class="note">紅色為 \(\vec{a}\)，藍色為 \(\vec{b}\)，紫色為 \(\vec{a}\times\vec{b}\)，黃色為平行四邊形面積。</p>
+        <p class="note" id="m3_plot_note">紅色為 \(\vec{a}\)，藍色為 \(\vec{b}\)，黃色為平行四邊形。</p>
       </div>
 
       <div class="col-steps">
-        <h2 style="color:var(--blue-deep);margin-bottom:14px;font-size:18px;">向量調整</h2>
+        <h2 style="color:var(--blue-deep);margin-bottom:14px;font-size:18px;">操作步驟</h2>
 
-        <div class="slider-group">
-          <div class="slider-label" style="color:#dc2626;">
-            向量 \(\vec{a}\)
-            <span id="v3_a_val" style="font-family:monospace;font-size:13px;color:#64748b;">(3.0, 1.0, 0.0)</span>
+        <!-- Step 0：觀察 -->
+        <div class="step" id="m3_s0">
+          <div class="step-title">Step 1　觀察平行四邊形</div>
+          <div class="latex-line">調整下方滑桿改變 \(\vec{a}\) 與 \(\vec{b}\)，觀察圖中的平行四邊形如何變化。</div>
+
+          <div class="slider-group" style="margin-top:12px;">
+            <div class="slider-label" style="color:#dc2626;">
+              向量 \(\vec{a}\)
+              <span id="v3_a_val" style="font-family:monospace;font-size:13px;color:#64748b;">(3.0, 1.0, 0.0)</span>
+            </div>
+            <div class="slider-row"><span class="lbl">x</span><input type="range" id="s3_ax" min="-5" max="5" step="0.5" value="3"><span class="slider-val" id="d3_ax">3</span></div>
+            <div class="slider-row"><span class="lbl">y</span><input type="range" id="s3_ay" min="-5" max="5" step="0.5" value="1"><span class="slider-val" id="d3_ay">1</span></div>
+            <div class="slider-row"><span class="lbl">z</span><input type="range" id="s3_az" min="-5" max="5" step="0.5" value="0"><span class="slider-val" id="d3_az">0</span></div>
           </div>
-          <div class="slider-row"><span class="lbl">x</span><input type="range" id="s3_ax" min="-5" max="5" step="0.1" value="3"><span class="slider-val" id="d3_ax">3</span></div>
-          <div class="slider-row"><span class="lbl">y</span><input type="range" id="s3_ay" min="-5" max="5" step="0.1" value="1"><span class="slider-val" id="d3_ay">1</span></div>
-          <div class="slider-row"><span class="lbl">z</span><input type="range" id="s3_az" min="-5" max="5" step="0.1" value="0"><span class="slider-val" id="d3_az">0</span></div>
-        </div>
-
-        <div class="slider-group">
-          <div class="slider-label" style="color:#2563eb;">
-            向量 \(\vec{b}\)
-            <span id="v3_b_val" style="font-family:monospace;font-size:13px;color:#64748b;">(1.0, 3.0, 0.0)</span>
+          <div class="slider-group">
+            <div class="slider-label" style="color:#2563eb;">
+              向量 \(\vec{b}\)
+              <span id="v3_b_val" style="font-family:monospace;font-size:13px;color:#64748b;">(1.0, 3.0, 0.0)</span>
+            </div>
+            <div class="slider-row"><span class="lbl">x</span><input type="range" id="s3_bx" min="-5" max="5" step="0.5" value="1"><span class="slider-val" id="d3_bx">1</span></div>
+            <div class="slider-row"><span class="lbl">y</span><input type="range" id="s3_by" min="-5" max="5" step="0.5" value="3"><span class="slider-val" id="d3_by">3</span></div>
+            <div class="slider-row"><span class="lbl">z</span><input type="range" id="s3_bz" min="-5" max="5" step="0.5" value="0"><span class="slider-val" id="d3_bz">0</span></div>
           </div>
-          <div class="slider-row"><span class="lbl">x</span><input type="range" id="s3_bx" min="-5" max="5" step="0.1" value="1"><span class="slider-val" id="d3_bx">1</span></div>
-          <div class="slider-row"><span class="lbl">y</span><input type="range" id="s3_by" min="-5" max="5" step="0.1" value="3"><span class="slider-val" id="d3_by">3</span></div>
-          <div class="slider-row"><span class="lbl">z</span><input type="range" id="s3_bz" min="-5" max="5" step="0.1" value="0"><span class="slider-val" id="d3_bz">0</span></div>
+
+          <div class="cross-result">
+            <div style="font-weight:700;color:#92400e;margin-bottom:6px;">即時計算</div>
+            <div id="m3_live" style="font-size:14px;line-height:1.9;color:#92400e;font-weight:700;font-family:monospace;"></div>
+          </div>
+
+          <div class="latex-line" style="margin-top:14px;">觀察：外積的<strong>長度</strong>與平行四邊形面積有什麼關係？</div>
+          <button class="btn-green" onclick="m3_go(1)">我觀察到規律了，繼續 →</button>
         </div>
 
-        <div id="m3_math" style="background:var(--blue-pale);border:1.5px solid #bfdbfe;border-radius:12px;padding:16px;margin-top:4px;line-height:2;">
+        <!-- Step 1：公式推導 -->
+        <div class="step hidden" id="m3_s1">
+          <div class="step-title">Step 2　為什麼？幾何推導</div>
+          <div class="latex-line">平行四邊形面積 = 底 × 高</div>
+          <div class="latex-line">\[S = |\vec{a}|\cdot|\vec{b}|\cdot\sin\theta\]</div>
+          <div class="latex-line">而外積的大小恰好等於：</div>
+          <div class="latex-line">\[|\vec{a}\times\vec{b}| = |\vec{a}|\cdot|\vec{b}|\cdot\sin\theta\]</div>
+          <div class="result-box" style="margin-top:12px;">
+            <div class="latex-line">\[\therefore\quad \boxed{S_{\text{平行四邊形}} = |\vec{a}\times\vec{b}|}\]</div>
+            <div class="latex-line">\[\boxed{S_{\triangle} = \dfrac{1}{2}|\vec{a}\times\vec{b}|}\]</div>
+          </div>
+
+          <div class="step-title" style="margin-top:18px;">確認理解</div>
+          <div class="latex-line">若 \(\vec{a}\) 與 \(\vec{b}\) 平行，\(|\vec{a}\times\vec{b}|\) 等於多少？</div>
+          <div class="choice-row">
+            <label class="choice"><input type="radio" name="m3_q0" value="big"> 非常大</label>
+            <label class="choice"><input type="radio" name="m3_q0" value="zero"> 0</label>
+          </div>
+          <button onclick="m3_check0()">確認答案</button>
+          <div class="result-box hidden" id="m3_r0"></div>
+          <button class="btn-slate hidden" id="m3_n1" onclick="m3_go(2)">下一步</button>
         </div>
 
-        <div class="step" style="margin-top:16px;">
-          <div class="step-title">總結公式</div>
-          <div class="latex-line">\[S_{\text{平行四邊形}} = |\vec{a}\times\vec{b}|\]</div>
-          <div class="latex-line">\[S_{\triangle} = \frac{1}{2}|\vec{a}\times\vec{b}|\]</div>
+        <!-- Step 2：計算練習（平行四邊形） -->
+        <div class="step hidden" id="m3_s2">
+          <div class="step-title">Step 3　計算練習：平行四邊形面積</div>
+          <div class="latex-line">已知：</div>
+          <div class="result-box" style="margin:10px 0;">
+            <div class="latex-line" id="m3_q2_display"></div>
+          </div>
+          <div class="latex-line">請計算以 \(\vec{a}\)、\(\vec{b}\) 為邊的平行四邊形面積。</div>
+
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:12px 0;">
+            <span style="font-weight:700;color:#92400e;">\(\vec{a}\times\vec{b}\) = (</span>
+            <input type="number" id="m3_cx" style="width:60px;padding:6px;border-radius:8px;border:1.5px solid #cbd5e1;text-align:center;font-size:15px;font-family:inherit;" placeholder="x">
+            <span>,</span>
+            <input type="number" id="m3_cy" style="width:60px;padding:6px;border-radius:8px;border:1.5px solid #cbd5e1;text-align:center;font-size:15px;font-family:inherit;" placeholder="y">
+            <span>,</span>
+            <input type="number" id="m3_cz" style="width:60px;padding:6px;border-radius:8px;border:1.5px solid #cbd5e1;text-align:center;font-size:15px;font-family:inherit;" placeholder="z">
+            <span style="font-weight:700;color:#92400e;">)</span>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <span style="font-weight:700;color:#7c3aed;">面積 =</span>
+            <input type="number" id="m3_area" step="0.01" style="width:90px;padding:6px;border-radius:8px;border:1.5px solid #cbd5e1;text-align:center;font-size:15px;font-family:inherit;" placeholder="面積">
+          </div>
+
+          <button onclick="m3_check2()">提交批改</button>
+          <div class="result-box hidden" id="m3_r2"></div>
+          <button class="btn-slate hidden" id="m3_n2" onclick="m3_go(3)">下一步</button>
         </div>
 
-        <div class="complete-banner" style="margin-top:16px;">
-          <h3>🎉 全部完成！</h3>
-          <p>恭喜你完成了所有四個實驗模組！你已掌握空間向量外積的幾何意義、代數計算、公垂性質與面積應用。</p>
+        <!-- Step 3：三角形面積 -->
+        <div class="step hidden" id="m3_s3">
+          <div class="step-title">Step 4　三角形面積</div>
+          <div class="latex-line">空間中三點 \(A=(0,0,0)\)、\(B\)、\(C\)，設：</div>
+          <div class="result-box" style="margin:10px 0;">
+            <div class="latex-line" id="m3_q3_display"></div>
+          </div>
+          <div class="latex-line">求 \(\triangle ABC\) 的面積。</div>
+
+          <!-- 小步驟 A：先算外積 -->
+          <div class="step" style="margin-top:14px;" id="m3_s3a">
+            <div class="step-title" style="font-size:15px;">① 先計算外積 \(\overrightarrow{AB}\times\overrightarrow{AC}\)</div>
+            <div style="margin:10px 0;">
+              <div style="font-weight:700;color:#92400e;margin-bottom:8px;">\(\overrightarrow{AB}\times\overrightarrow{AC}\) =</div>
+              <div style="display:grid;grid-template-columns:auto 1fr auto 1fr auto 1fr auto;align-items:center;gap:6px;">
+                <span style="font-weight:700;color:#92400e;">(</span>
+                <input type="number" id="m3_tx" style="padding:6px;border-radius:8px;border:1.5px solid #cbd5e1;text-align:center;font-size:15px;font-family:inherit;" placeholder="x">
+                <span style="color:#64748b;">,</span>
+                <input type="number" id="m3_ty" style="padding:6px;border-radius:8px;border:1.5px solid #cbd5e1;text-align:center;font-size:15px;font-family:inherit;" placeholder="y">
+                <span style="color:#64748b;">,</span>
+                <input type="number" id="m3_tz" style="padding:6px;border-radius:8px;border:1.5px solid #cbd5e1;text-align:center;font-size:15px;font-family:inherit;" placeholder="z">
+                <span style="font-weight:700;color:#92400e;">)</span>
+              </div>
+            </div>
+            <button onclick="m3_check3_cross()">確認外積</button>
+            <div class="result-box hidden" id="m3_r3_cross"></div>
+          </div>
+
+          <!-- 小步驟 B：再算面積 -->
+          <div class="step hidden" style="margin-top:14px;" id="m3_s3b">
+            <div class="step-title" style="font-size:15px;">② 再計算三角形面積</div>
+            <div class="latex-line">\(S_\triangle = \dfrac{1}{2}|\overrightarrow{AB}\times\overrightarrow{AC}|\)</div>
+            <div style="display:flex;align-items:center;gap:8px;margin:12px 0;">
+              <span style="font-weight:700;color:#7c3aed;">\(S_\triangle\) =</span>
+              <input type="number" id="m3_tarea" step="1" style="width:100px;padding:6px;border-radius:8px;border:1.5px solid #cbd5e1;text-align:center;font-size:15px;font-family:inherit;" placeholder="面積">
+            </div>
+            <button onclick="m3_check3_area()">提交批改</button>
+            <div class="result-box hidden" id="m3_r3_area"></div>
+          </div>
+
+          <!-- 完成橫幅 -->
+          <div id="mod3_unlock" class="complete-banner hidden" style="margin-top:16px;">
+            <h3>🎉 恭喜完成全部四關！</h3>
+            <p>你已掌握外積的幾何意義、代數計算、公垂性質與面積應用，太厲害了！</p>
+            <div class="result-box" style="margin-top:12px;background:rgba(255,255,255,0.15);border-left-color:white;">
+              <div class="latex-line" style="color:white;">\(S_{\text{平行四邊形}} = |\vec{a}\times\vec{b}|\)</div>
+              <div class="latex-line" style="color:white;">\(S_{\triangle} = \dfrac{1}{2}|\vec{a}\times\vec{b}|\)</div>
+            </div>
+            <div class="unlock-btn-wrap">
+              <button class="unlock-btn" onclick="restartLab()">↩ 回到第一關重新挑戰</button>
+            </div>
+          </div>
         </div>
+
       </div>
     </div>
   </div>
@@ -965,6 +1071,23 @@ function mod0_update(){
 
   const data=[...axisTraces(), vecTrace(a,"a向量","#dc2626"), vecTrace(b,"b向量","#2563eb")];
   const cones=[coneTrace(a,"#dc2626"),coneTrace(b,"#2563eb")];
+
+  // ✅ 加平面：畫 a-b 平面
+  data.push({
+    type:"mesh3d",
+    x:[0, a[0], b[0], a[0]+b[0]],
+    y:[0, a[1], b[1], a[1]+b[1]],
+    z:[0, a[2], b[2], a[2]+b[2]],
+    i:[0, 0],
+    j:[1, 2],
+    k:[3, 3],
+    opacity:0.30,
+    color:"#93c5fd",
+    showlegend:false,
+    name:"a-b 平面",
+    hoverinfo:"skip"
+  });
+
   if(area>0.01){
     data.push(vecTrace(c,"a×b","#16a34a"));
     cones.push(coneTrace(c,"#16a34a"));
@@ -1123,6 +1246,22 @@ function m1_drawPlot(step){
   data.push(vecTrace(m1_b,"b向量","#2563eb"));
   cones.push(coneTrace(m1_a,"#dc2626"));
   cones.push(coneTrace(m1_b,"#2563eb"));
+
+  // ── 畫出 a 與 b 所張開的平面（平行四邊形）──
+  const s=[m1_a[0]+m1_b[0], m1_a[1]+m1_b[1], m1_a[2]+m1_b[2]];
+  data.push({
+    type:"mesh3d",
+    x:[0, m1_a[0], s[0], m1_b[0]],
+    y:[0, m1_a[1], s[1], m1_b[1]],
+    z:[0, m1_a[2], s[2], m1_b[2]],
+    i:[0,0], j:[1,2], k:[2,3],
+    opacity:0.30,
+    color:"#93c5fd",
+    showlegend:true,
+    name:"a-b 平面",
+    hoverinfo:"skip"
+  });
+
   if(step>=2){
     data.push(vecTrace(m1_c,"a×b","#16a34a"));
     const cc=coneTrace(m1_c,"#16a34a"); if(cc) cones.push(cc);
@@ -1229,10 +1368,7 @@ function m2_drawPlot(){
         data.push(vecTrace(m2_cur,"c向量","#16a34a"));
         const cc=coneTrace(m2_cur,"#16a34a"); if(cc) cones.push(cc);
         
-        if(m2_show_ang) {
-          const arcA = getArcTrace(m2_a, m2_cur, "#dc2626", 1.2); if(arcA) data.push(arcA);
-          const arcB = getArcTrace(m2_b, m2_cur, "#2563eb", 1.2); if(arcB) data.push(arcB);
-        }
+       
       } else if (m2_step===2) {
         data.push(vecTrace(m2_cur,"tc向量","#16a34a"));
         const cc=coneTrace(m2_cur,"#16a34a"); if(cc) cones.push(cc);
@@ -1325,55 +1461,217 @@ function m2_checkQuiz(){
 }
 
 // ──────────────────────────────────────────
-// MODULE 3 - Area Application
+// MODULE 3 - Area Application (學習單版)
 // ──────────────────────────────────────────
-function m3_init(){
-  ['ax','ay','az','bx','by','bz'].forEach(k=>{
-    document.getElementById('s3_'+k).addEventListener('input',m3_update);
+let m3_qa=[2,0,0], m3_qb=[0,3,0];
+let m3_tab=[2,1,0], m3_tac=[0,2,2];
+
+function m3_go(step){
+  [0,1,2,3].forEach(i=>{
+    const el=document.getElementById('m3_s'+i);
+    if(el) el.classList.add('hidden');
   });
-  m3_update();
+  document.getElementById('m3_s'+step).classList.remove('hidden');
+  // 更新圖
+  if(step===0) m3_update_slider();
+  if(step===2) m3_draw_quiz2();
+  if(step===3) m3_draw_quiz3();
+  updateMathJax();
 }
 
-function m3_update(){
+function m3_init(){
+  ['ax','ay','az','bx','by','bz'] .forEach(k=>{
+    document.getElementById('s3_'+k).addEventListener('input', m3_update_slider);
+  });
+  // 預設第一題題目
+  document.getElementById('m3_q2_display').innerHTML=
+    `\\(\\vec{a}=(${m3_qa.join(',\\;')}),\\quad\\vec{b}=(${m3_qb.join(',\\;')})\\)`;
+  const B=m3_tab, C=m3_tac;
+  document.getElementById('m3_q3_display').innerHTML=
+    `\\(B=(${B.join(',\\;')}),\\quad C=(${C.join(',\\;')})\\)<br>`+
+    `\\(\\overrightarrow{AB}=(${B.join(',\\;')}),\\quad\\overrightarrow{AC}=(${C.join(',\\;')})\\)`;
+  updateMathJax(document.getElementById('m3_s2'));
+  updateMathJax(document.getElementById('m3_s3'));
+  m3_update_slider();
+}
+
+function m3_update_slider(){
   const ax=parseFloat(document.getElementById('s3_ax').value);
   const ay=parseFloat(document.getElementById('s3_ay').value);
   const az=parseFloat(document.getElementById('s3_az').value);
   const bx=parseFloat(document.getElementById('s3_bx').value);
   const by=parseFloat(document.getElementById('s3_by').value);
   const bz=parseFloat(document.getElementById('s3_bz').value);
-
   ['ax','ay','az'].forEach(k=>document.getElementById('d3_'+k).textContent=parseFloat(document.getElementById('s3_'+k).value));
   ['bx','by','bz'].forEach(k=>document.getElementById('d3_'+k).textContent=parseFloat(document.getElementById('s3_'+k).value));
   document.getElementById('v3_a_val').textContent=`(${ax}, ${ay}, ${az})`;
   document.getElementById('v3_b_val').textContent=`(${bx}, ${by}, ${bz})`;
-
   const a=[ax,ay,az], b=[bx,by,bz];
   const c=cross(a,b); const area=norm(c);
-  const math=document.getElementById('m3_math');
-  math.innerHTML=`
-    <div class="latex-line">\\(\\vec{a}=[${ax},${ay},${az}]\\)</div>
-    <div class="latex-line">\\(\\vec{b}=[${bx},${by},${bz}]\\)</div>
-    <hr style="border:0;border-top:1px solid #bfdbfe;margin:8px 0;">
-    <div class="latex-line">\\(\\vec{a}\\times\\vec{b}=[${c[0].toFixed(2)},${c[1].toFixed(2)},${c[2].toFixed(2)}]\\)</div>
-    <div class="latex-line">\\(|\\vec{a}\\times\\vec{b}|=${area.toFixed(3)}\\)</div>
-    <div class="latex-line" style="color:#ca8a04;font-weight:700;">平行四邊形面積 = ${area.toFixed(3)}</div>
-    <div class="latex-line" style="color:#7c3aed;">三角形面積 = ${(area/2).toFixed(3)}</div>`;
-  updateMathJax(math);
+  const live=document.getElementById('m3_live');
+  if(live) live.innerHTML=`|a×b| = ${area.toFixed(3)}<br>平行四邊形面積 ≈ ${area.toFixed(3)}<br>三角形面積 ≈ ${(area/2).toFixed(3)}`;
+  m3_draw_plot_slider(a,b,c,area);
+}
 
+function m3_draw_plot_slider(a,b,c,area){
   const data=[...axisTraces(), vecTrace(a,"a向量","#dc2626"), vecTrace(b,"b向量","#2563eb")];
   const cones=[coneTrace(a,"#dc2626"),coneTrace(b,"#2563eb")];
+  const s=[a[0]+b[0],a[1]+b[1],a[2]+b[2]];
+  data.push({type:"mesh3d",x:[0,a[0],s[0],b[0]],y:[0,a[1],s[1],b[1]],z:[0,a[2],s[2],b[2]],i:[0,0],j:[1,2],k:[2,3],opacity:0.45,color:"#fbbf24",showlegend:false,hoverinfo:"skip"});
   if(area>0.01){
     data.push(vecTrace(c,"a×b","#9333ea"));
     const cc=coneTrace(c,"#9333ea"); if(cc) cones.push(cc);
-    const s=[ax+bx,ay+by,az+bz];
-    data.push({type:"mesh3d",x:[0,ax,s[0],bx],y:[0,ay,s[1],by],z:[0,az,s[2],bz],i:[0,0],j:[1,2],k:[2,3],opacity:0.35,color:"#fbbf24",showlegend:false,hoverinfo:"skip"});
   }
   data.push(...cones.filter(Boolean));
   Plotly.react("plot3",data,PLOT_LAYOUT,{responsive:true,displaylogo:false});
 }
 
-// ──────────────────────────────────────────
-// INIT
+function m3_draw_quiz2(){
+  const a=m3_qa, b=m3_qb;
+  const c=cross(a,b); const area=norm(c);
+  const s=[a[0]+b[0],a[1]+b[1],a[2]+b[2]];
+  const data=[...axisTraces(), vecTrace(a,"a","#dc2626"), vecTrace(b,"b","#2563eb")];
+  const cones=[coneTrace(a,"#dc2626"),coneTrace(b,"#2563eb")];
+  data.push({type:"mesh3d",x:[0,a[0],s[0],b[0]],y:[0,a[1],s[1],b[1]],z:[0,a[2],s[2],b[2]],i:[0,0],j:[1,2],k:[2,3],opacity:0.45,color:"#fbbf24",showlegend:false,hoverinfo:"skip"});
+  if(area>0.01){ data.push(vecTrace(c,"a×b","#9333ea")); const cc=coneTrace(c,"#9333ea"); if(cc) cones.push(cc); }
+  data.push(...cones.filter(Boolean));
+  Plotly.react("plot3",data,PLOT_LAYOUT,{responsive:true,displaylogo:false});
+}
+
+function m3_draw_quiz3(){
+  const B=m3_tab, C=m3_tac;
+  const data=[...axisTraces()];
+  const cones=[];
+
+  // 標示 A、B、C 三點
+  data.push({
+    type:"scatter3d", mode:"markers+text",
+    x:[0, B[0], C[0]],
+    y:[0, B[1], C[1]],
+    z:[0, B[2], C[2]],
+    text:["A", "B", "C"],
+    textposition:["top center","top center","top center"],
+    textfont:{size:18, color:"#1e3a8a"},
+    marker:{size:6, color:["#1e3a8a","#dc2626","#2563eb"]},
+    showlegend:false
+  });
+
+  // 畫三角形三條邊 A→B, A→C, B→C
+  data.push({type:"scatter3d",mode:"lines",x:[0,B[0]], y:[0,B[1]], z:[0,B[2]],line:{color:"#dc2626",width:5}, showlegend:false, name:"AB"});
+  data.push({type:"scatter3d",mode:"lines",x:[0,C[0]], y:[0,C[1]], z:[0,C[2]],line:{color:"#2563eb",width:5}, showlegend:false, name:"AC"});
+  data.push({type:"scatter3d",mode:"lines",x:[B[0],C[0]], y:[B[1],C[1]], z:[B[2],C[2]],line:{color:"#64748b",width:5}, showlegend:false, name:"BC"});
+
+  // 填色三角形
+  data.push({type:"mesh3d",x:[0,B[0],C[0]], y:[0,B[1],C[1]], z:[0,B[2],C[2]],i:[0], j:[1], k:[2],opacity:0.40, color:"#fbbf24", showlegend:false, hoverinfo:"skip"});
+
+  Plotly.react("plot3", data, PLOT_LAYOUT, {responsive:true, displaylogo:false});
+
+  document.getElementById('m3_plot_note').innerHTML=
+    '黑色為原點 \\(A\\)，紅色為 \\(B\\)，藍色為 \\(C\\)，黃色為三角形面積。';
+  updateMathJax(document.getElementById('m3_plot_note'));
+  updateMathJax(document.getElementById('m3_s3'));
+}
+
+function m3_check0(){
+  const ans=document.querySelector('input[name="m3_q0"]:checked')?.value||"";
+  const r=document.getElementById('m3_r0');
+  r.classList.remove('hidden');
+  if(ans==="zero"){
+    r.className='result-box green';
+    r.innerHTML=`<div class="feedback correct">答對了！</div><div class="latex-line">兩向量平行時 \\(\\sin\\theta=0\\)，面積為零，外積 \\(=\\vec{0}\\)。</div>`;
+    document.getElementById('m3_n1').classList.remove('hidden');
+  } else {
+    r.className='result-box red';
+    r.innerHTML=`<div class="feedback wrong">再想想。</div><div class="latex-line">平行時夾角 \\(\\theta=0^\\circ\\)，\\(\\sin 0=?\\)</div>`;
+  }
+  updateMathJax(r);
+}
+
+function m3_check2(){
+  const cx=parseFloat(document.getElementById('m3_cx').value);
+  const cy=parseFloat(document.getElementById('m3_cy').value);
+  const cz=parseFloat(document.getElementById('m3_cz').value);
+  const area=parseFloat(document.getElementById('m3_area').value);
+  const ans_c=cross(m3_qa,m3_qb);
+  const ans_area=norm(ans_c);
+  const r=document.getElementById('m3_r2');
+  r.classList.remove('hidden');
+  const cross_ok=(Math.abs(cx-ans_c[0])<0.01&&Math.abs(cy-ans_c[1])<0.01&&Math.abs(cz-ans_c[2])<0.01);
+  const area_ok=Math.abs(area-ans_area)<0.05;
+  if(cross_ok&&area_ok){
+    r.className='result-box green';
+    r.innerHTML=`<div class="feedback correct">完全正確！</div>
+      <div class="latex-line">\\(\\vec{a}\\times\\vec{b}=(${ans_c.join(',')})\\)</div>
+      <div class="latex-line">\\(|\\vec{a}\\times\\vec{b}|=${ans_area.toFixed(3)}\\)，面積 \\(=${ans_area.toFixed(3)}\\)</div>`;
+    document.getElementById('m3_n2').classList.remove('hidden');
+  } else {
+    r.className='result-box red';
+    r.innerHTML=`<div class="feedback wrong">再算一遍。</div>
+      ${!cross_ok?`<div class="latex-line">提示：外積計算有誤，回到第一關用「寫兩次去兩端」重算看看。</div>`:''}
+      ${cross_ok&&!area_ok?`<div class="latex-line">提示：外積正確！但 \\(|\\vec{c}|=\\sqrt{c_x^2+c_y^2+c_z^2}\\)，再算算模長。</div>`:''}`;  }
+  updateMathJax(r);
+}
+
+function m3_check3_cross(){
+  const cx=parseFloat(document.getElementById('m3_tx').value);
+  const cy=parseFloat(document.getElementById('m3_ty').value);
+  const cz=parseFloat(document.getElementById('m3_tz').value);
+  const ans=cross(m3_tab,m3_tac);
+  const r=document.getElementById('m3_r3_cross');
+  r.classList.remove('hidden');
+  const ok=(Math.abs(cx-ans[0])<0.01&&Math.abs(cy-ans[1])<0.01&&Math.abs(cz-ans[2])<0.01);
+  if(ok){
+    r.className='result-box green';
+    r.innerHTML=`<div class="feedback correct">外積正確！</div>
+      <div class="latex-line">\\(\\overrightarrow{AB}\\times\\overrightarrow{AC}=(${ans.join(',')})\\)</div>
+      <div class="latex-line">\\(|\\overrightarrow{AB}\\times\\overrightarrow{AC}|=\\sqrt{${ans[0]}^2+${ans[1]}^2+${ans[2]}^2}=${norm(ans).toFixed(0)}\\)</div>`;
+    document.getElementById('m3_s3b').classList.remove('hidden');
+  } else {
+    r.className='result-box red';
+    r.innerHTML=`<div class="feedback wrong">再算一遍。</div>
+      <div class="latex-line">提示：回到第一關用「寫兩次去兩端」重算看看。</div>`;
+  }
+  updateMathJax(r);
+}
+
+function m3_check3_area(){
+  const area=parseFloat(document.getElementById('m3_tarea').value);
+  const ans=norm(cross(m3_tab,m3_tac))/2;
+  const r=document.getElementById('m3_r3_area');
+  r.classList.remove('hidden');
+  if(Math.abs(area-ans)<0.01){
+    r.className='result-box green';
+    r.innerHTML=`<div class="feedback correct">完全正確！答案是 ${ans.toFixed(2)}。</div>`;
+    document.getElementById('mod3_unlock').classList.remove('hidden');
+    updateMathJax(document.getElementById('mod3_unlock'));
+  } else {
+    r.className='result-box red';
+    r.innerHTML=`<div class="feedback wrong">再算一遍。</div>
+      <div class="latex-line">提示：\\(S_\\triangle=\\dfrac{1}{2}\\times|\\overrightarrow{AB}\\times\\overrightarrow{AC}|\\)</div>`;
+  }
+  updateMathJax(r);
+}
+
+function restartLab(){
+  // 重置進度條
+  [0,1,2,3].forEach(i=>{
+    const node=document.getElementById('pnode'+i);
+    node.classList.remove('active','done');
+  });
+  document.getElementById('pnode0').classList.add('active');
+  [0,1,2].forEach(i=>document.getElementById('pconn'+i).classList.remove('done'));
+  // 切回第一關
+  document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+  document.getElementById('mod0').classList.add('active');
+  // 重置第一關畫面
+  document.getElementById('mod0_partA').classList.remove('hidden');
+  document.getElementById('mod0_partB').classList.add('hidden');
+  document.getElementById('mod0_unlock').classList.add('hidden');
+  currentModule=0;
+  mod0_update();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
 // ──────────────────────────────────────────
 window.addEventListener('load',()=>{
   mod0_update();
