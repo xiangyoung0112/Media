@@ -354,11 +354,6 @@ input[type="range"]{ width:100%; accent-color:var(--blue-light); }
 .math-cell.highlight-x{ color:#ca8a04; background:#fef9c3; border-radius:8px; }
 .math-cell.highlight-y{ color:#16a34a; background:#dcfce7; border-radius:8px; }
 .math-cell.highlight-z{ color:#7c3aed; background:#ede9fe; border-radius:8px; }
-.math-cell.cross-line{ position:relative; }
-.math-cell.cross-line::after{
-  content:'';position:absolute;top:50%;left:-5%;width:110%;height:3px;
-  background:#ef4444;transform:rotate(-15deg);
-}
 .cross-center{ position:relative; }
 
 .step-desc-box{
@@ -439,6 +434,19 @@ select{
   .two-col{ grid-template-columns:1fr; }
   .plot-box{ height:480px; }
   .col-plot{ border-right:none; border-bottom:1px solid #e2e8f0; }
+}
+
+/* ── Blackboard cross overlay ── */
+.bb-grid-wrap{
+  position:relative;
+  width:100%;
+}
+.bb-cross-svg{
+  position:absolute;
+  top:0; left:0;
+  width:100%; height:100%;
+  pointer-events:none;
+  z-index:10;
 }
 </style>
 </head>
@@ -546,7 +554,10 @@ select{
         <div class="col-plot" style="background:#f8fafc;">
           <div class="blackboard-area">
             <h3 style="font-size:20px;font-weight:900;color:var(--blue-deep);margin-bottom:20px;border-bottom:2px solid var(--blue-tint);padding-bottom:10px;width:100%;text-align:center;">「寫兩次，去兩端」計算心法</h3>
-            <div class="math-grid" id="bb_grid"></div>
+            <div class="bb-grid-wrap">
+              <div class="math-grid" id="bb_grid"></div>
+              <svg class="bb-cross-svg" id="bb_cross_svg"></svg>
+            </div>
             <div class="step-desc-box">
               <div id="bb_desc" style="font-size:15px;color:#1e40af;font-weight:700;">請在右側輸入向量座標，並點擊「開始計算」</div>
               <div id="bb_formula" style="font-size:18px;font-weight:900;color:#1e40af;"></div>
@@ -1136,7 +1147,7 @@ function bb_render(){
 
   for(let i=0;i<6;i++){
     let cls="math-cell";
-    if(bbStep>=2&&(i===0||i===5)) cls+=" cross-line dim";
+    if(bbStep>=2&&(i===0||i===5)) cls+=" dim";
     if(bbStep===3&&(i===1)) cls+=" highlight-x";
     if(bbStep===3&&(i===2)) cls+=" highlight-x";
     if(bbStep===4&&(i===2)) cls+=" highlight-y";
@@ -1152,7 +1163,7 @@ function bb_render(){
   }
   for(let i=0;i<6;i++){
     let cls="math-cell";
-    if(bbStep>=2&&(i===0||i===5)) cls+=" cross-line dim";
+    if(bbStep>=2&&(i===0||i===5)) cls+=" dim";
     if(bbStep===3&&(i===1||i===2)) cls+=" highlight-x";
     if(bbStep===4&&(i===2||i===3)) cls+=" highlight-y";
     if(bbStep===5&&(i===3||i===4)) cls+=" highlight-z";
@@ -1174,17 +1185,125 @@ function bb_render(){
   else if(bbStep===1){ desc.innerHTML="Step 1：將兩向量的座標依序各寫兩次。"; formula.innerHTML=""; }
   else if(bbStep===2){ desc.innerHTML="Step 2：去兩端。將最左與最右的數字劃掉不看。"; formula.innerHTML=""; }
   else if(bbStep===3){ 
-    desc.innerHTML="Step 3：計算 <i>x</i> 分量（左上×右下 − 左下×右上）"; 
+    desc.innerHTML=`Step 3：計算 <i>x</i> 分量（左上×右下 − 左下×右上）<br><span style="font-size:20px;font-weight:900;color:#ca8a04;">x = ${rx}</span>`; 
     formula.innerHTML=`<div style="text-align:left;display:inline-block;line-height:1.6;margin-top:8px;">${strX}<br><b style="color:var(--blue-deep)">(x, y, z) = (${rx}, y, z)</b></div>`; 
   }
   else if(bbStep===4){ 
-    desc.innerHTML="Step 4：計算 <i>y</i> 分量（往右移一格）"; 
+    desc.innerHTML=`Step 4：計算 <i>y</i> 分量（往右移一格）<br><span style="font-size:20px;font-weight:900;color:#ca8a04;">x = ${rx}</span>　<span style="font-size:20px;font-weight:900;color:#16a34a;">y = ${ry}</span>`; 
     formula.innerHTML=`<div style="text-align:left;display:inline-block;line-height:1.6;margin-top:8px;">${strX}<br>${strY}<br><b style="color:var(--blue-deep)">(x, y, z) = (${rx}, ${ry}, z)</b></div>`; 
   }
   else if(bbStep===5){ 
-    desc.innerHTML="Step 5：計算 <i>z</i> 分量。完成！"; 
+    desc.innerHTML=`Step 5：計算 <i>z</i> 分量。完成！<br><span style="font-size:20px;font-weight:900;color:#ca8a04;">x = ${rx}</span>　<span style="font-size:20px;font-weight:900;color:#16a34a;">y = ${ry}</span>　<span style="font-size:20px;font-weight:900;color:#7c3aed;">z = ${rz}</span>`; 
     formula.innerHTML=`<div style="text-align:left;display:inline-block;line-height:1.6;margin-top:8px;">${strX}<br>${strY}<br>${strZ}<br><b style="color:var(--blue-deep)">a × b = (${rx}, ${ry}, ${rz})</b></div>`; 
   }
+  // 繪製「去兩端」交叉線
+  (function drawCross(){
+    const svg = document.getElementById('bb_cross_svg');
+    svg.innerHTML = '';
+    if(bbStep < 2) return;
+    const grid = document.getElementById('bb_grid');
+    const cells = grid.querySelectorAll('.math-cell');
+    // 上排第1格(i=0) 與 下排第1格(i=6) 交叉
+    // 上排第6格(i=5) 與 下排第6格(i=11) 交叉
+    const pairs = [[0,6],[5,11]];
+    const gridRect = grid.getBoundingClientRect();
+    const svgRect = svg.getBoundingClientRect();
+    pairs.forEach(([topIdx, botIdx])=>{
+      const t = cells[topIdx].getBoundingClientRect();
+      const b = cells[botIdx].getBoundingClientRect();
+      const ox = svgRect.left;
+      const oy = svgRect.top;
+      // 外框
+      const x1 = t.left - ox, y1 = t.top - oy;
+      const x2 = b.right - ox, y2 = b.bottom - oy;
+      // 對角線 1：左上→右下
+      const l1 = document.createElementNS('http://www.w3.org/2000/svg','line');
+      l1.setAttribute('x1', x1); l1.setAttribute('y1', y1);
+      l1.setAttribute('x2', x2); l1.setAttribute('y2', y2);
+      l1.setAttribute('stroke','#ef4444'); l1.setAttribute('stroke-width','3');
+      l1.setAttribute('stroke-linecap','round');
+      svg.appendChild(l1);
+      // 對角線 2：右上→左下
+      const l2 = document.createElementNS('http://www.w3.org/2000/svg','line');
+      l2.setAttribute('x1', b.right - ox); l2.setAttribute('y1', t.top - oy);
+      l2.setAttribute('x2', t.left - ox); l2.setAttribute('y2', b.bottom - oy);
+      l2.setAttribute('stroke','#ef4444'); l2.setAttribute('stroke-width','3');
+      l2.setAttribute('stroke-linecap','round');
+      svg.appendChild(l2);
+    });
+  })();
+
+  // ── 交叉相乘連線 ──
+  (function drawCrossLines(){
+    const svg = document.getElementById('bb_cross_svg');
+    if(!svg) return;
+    svg.innerHTML = '';
+    if(bbStep < 3) return;
+
+    const cells = document.getElementById('bb_grid').querySelectorAll('.math-cell');
+    // 上排 i=0~5, 下排 i=6~11
+    // step3→x: a[1](idx1) × b[2](idx8)  和  a[2](idx2) × b[1](idx7)
+    // step4→y: a[2](idx2) × b[0](idx6+2=8? 不對)
+    // 依照 aS=[a0,a1,a2,a0,a1,a2], bS 同
+    // 上排格子: 0=a0,1=a1,2=a2,3=a0,4=a1,5=a2
+    // 下排格子: 6=b0,7=b1,8=b2,9=b0,10=b1,11=b2
+    // x分量: a[1]×b[2] - a[2]×b[1] → (上1)×(下2) 和 (上2)×(下1)
+    // y分量: a[2]×b[0] - a[0]×b[2] → (上2)×(下3:b0) 和 (上3:a0)×(下2)
+    //   但去兩端後下排有效是 6~10, 其中 b0在idx9, b2在idx8
+    //   改用實際對應: step4用的是col 2~3 (0-based after strip)
+    //   上2=a2, 上3=a0, 下2=b2, 下3=b0
+    //   → (上2)×(下3) 和 (上3)×(下2)
+    // z分量: a[0]×b[1] - a[1]×b[0] → (上3:a0)×(下4:b1) 和 (上4:a1)×(下3:b0)
+
+    const crossPairs = {
+      3: { color:'#ca8a04', pairs:[[1,8],[2,7]] },   // x: (a1,b2) 和 (a2,b1)
+      4: { color:'#16a34a', pairs:[[2,9],[3,8]] },   // y: (a2,b0) 和 (a0,b2) → col2,col3
+      5: { color:'#7c3aed', pairs:[[3,10],[4,9]] },  // z: (a0,b1) 和 (a1,b0) → col3,col4
+    };
+
+    // 只畫當前步驟的交叉線
+    for(let s=bbStep; s<=bbStep; s++){
+      const {color, pairs} = crossPairs[s];
+      // 兩個格子畫 X 交叉線
+      const [i0, i1] = pairs[0];  // 正向：上左×下右
+      const [i2, i3] = pairs[1];  // 反向：上右×下左
+      const svgEl = svg;
+      const base = svgEl.getBoundingClientRect();
+
+      function cellCenter(idx){
+        const r = cells[idx].getBoundingClientRect();
+        return { x: r.left - base.left + r.width/2, y: r.top - base.top + r.height/2 };
+      }
+
+      const p0 = cellCenter(i0), p1 = cellCenter(i1);
+      const p2 = cellCenter(i2), p3 = cellCenter(i3);
+
+      // 正向線（左上→右下）
+      const l1 = document.createElementNS('http://www.w3.org/2000/svg','line');
+      l1.setAttribute('x1',p0.x); l1.setAttribute('y1',p0.y);
+      l1.setAttribute('x2',p1.x); l1.setAttribute('y2',p1.y);
+      l1.setAttribute('stroke',color); l1.setAttribute('stroke-width','2.5');
+      l1.setAttribute('stroke-linecap','round'); l1.setAttribute('opacity','0.85');
+      svgEl.appendChild(l1);
+
+      // 反向線（右上→左下）= 減號方向
+      const l2 = document.createElementNS('http://www.w3.org/2000/svg','line');
+      l2.setAttribute('x1',p2.x); l2.setAttribute('y1',p2.y);
+      l2.setAttribute('x2',p3.x); l2.setAttribute('y2',p3.y);
+      l2.setAttribute('stroke',color); l2.setAttribute('stroke-width','2.5');
+      l2.setAttribute('stroke-linecap','round'); l2.setAttribute('opacity','0.85');
+      svgEl.appendChild(l2);
+
+      // 在交叉中心加小圓點
+      const mx = (p0.x+p1.x+p2.x+p3.x)/4;
+      const my = (p0.y+p1.y+p2.y+p3.y)/4;
+      const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      dot.setAttribute('cx',mx); dot.setAttribute('cy',my);
+      dot.setAttribute('r','4'); dot.setAttribute('fill',color); dot.setAttribute('opacity','0.7');
+      svgEl.appendChild(dot);
+    }
+  })();
+
   updateMathJax(document.querySelector('.blackboard-area'));
 }
 
